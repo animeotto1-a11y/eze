@@ -1,5 +1,7 @@
 # React 3D Gallery Pagination
 
+[![Live Demo](https://img.shields.io/badge/demo-live-green?style=for-the-badge&logo=vercel)](https://react-3d-gallery-pagination.vercel.app/)
+
 A responsive **3D image gallery and pagination project** built with **React, Axios, Tailwind CSS, and the Picsum Photos API**.
 
 The project fetches image data dynamically through an API and presents it in an interactive 3D card layout with a centered featured card, side cards, smooth transitions, pagination, mouse-wheel navigation, and mobile touch/swipe support.
