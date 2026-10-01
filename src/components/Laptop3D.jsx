@@ -8,8 +8,6 @@ import {
   Power,
   RotateCcw,
   Sparkles,
-  Volume2,
-  VolumeX,
   Phone,
   Calendar,
   ShieldCheck,
@@ -121,34 +119,12 @@ const Laptop3D = () => {
   const [openProgress, setOpenProgress] = useState(0); // 0 (closed) to 1 (fully open)
   const [isPoweredOn, setIsPoweredOn] = useState(true);
   const [showSignal, setShowSignal] = useState(false);
-  const [soundEnabled, setSoundEnabled] = useState(true);
   const hasSignaledRef = useRef(false);
 
   // Mouse Drag Rotation (firmly bounded so laptop never disappears)
   const [targetRotation, setTargetRotation] = useState({ x: 0.08, y: 0 });
   const isDraggingRef = useRef(false);
   const prevPointerRef = useRef({ x: 0, y: 0 });
-
-  // Sound effects
-  const [beepAudio] = useState(() => new Audio('/sounds/beep.wav'));
-  const [fanAudio] = useState(() => new Audio('/sounds/fan.mp3'));
-
-  // Fan sound effect when laptop powers on
-  useEffect(() => {
-    if (openProgress >= 0.85 && isPoweredOn && soundEnabled) {
-      try {
-        fanAudio.volume = 0.15;
-        fanAudio.play().catch(() => {});
-      } catch (e) {}
-    } else {
-      try {
-        fanAudio.pause();
-      } catch (e) {}
-    }
-    return () => {
-      try { fanAudio.pause(); } catch (e) {}
-    };
-  }, [openProgress, isPoweredOn, soundEnabled]);
 
   // Scroll listener: progressive smooth opening until center of section + scroll buffer (1 to 5 wheel ticks)
   useEffect(() => {
@@ -174,7 +150,7 @@ const Laptop3D = () => {
 
       setOpenProgress(openingFraction);
 
-      // Haptic Vibration & Audio Signal when arriving fully open at the center
+      // Haptic Vibration when arriving fully open at the center (no audio)
       if (openingFraction >= 0.98 && !hasSignaledRef.current) {
         hasSignaledRef.current = true;
         setShowSignal(true);
@@ -183,15 +159,6 @@ const Laptop3D = () => {
         if (typeof navigator !== 'undefined' && navigator.vibrate) {
           try {
             navigator.vibrate([40, 60, 40]);
-          } catch (e) {}
-        }
-
-        // Chime audio
-        if (soundEnabled) {
-          try {
-            beepAudio.currentTime = 0;
-            beepAudio.volume = 0.3;
-            beepAudio.play().catch(() => {});
           } catch (e) {}
         }
 
@@ -207,7 +174,7 @@ const Laptop3D = () => {
     handleScroll();
 
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [soundEnabled]);
+  }, []);
 
   // Pointer Drag Handlers (Smooth & Bounded: Yaw [-45°, +45°], Pitch [-10°, +22°])
   const handlePointerDown = (e) => {
@@ -297,24 +264,6 @@ const Laptop3D = () => {
           >
             <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
             <span>Recentrer</span>
-          </button>
-
-          {/* Audio Toggle */}
-          <button
-            onClick={() => setSoundEnabled(!soundEnabled)}
-            className="px-3.5 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/15 text-white/70 hover:text-amber-300 text-xs font-mono flex items-center gap-1.5 transition-all cursor-pointer shadow-lg"
-          >
-            {soundEnabled ? (
-              <>
-                <Volume2 className="w-3.5 h-3.5 text-amber-400" />
-                <span>Son Actif</span>
-              </>
-            ) : (
-              <>
-                <VolumeX className="w-3.5 h-3.5 text-neutral-400" />
-                <span>Muet</span>
-              </>
-            )}
           </button>
         </div>
 
