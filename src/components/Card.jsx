@@ -12,10 +12,10 @@ const Card = ({ photo, isCenter, totalItems, currentIndex, onExpand }) => {
   return (
     <div
       onClick={handleCardClick}
-      className={`relative rounded-3xl overflow-hidden border transition-all duration-500 bg-neutral-950/90 backdrop-blur-xl group select-none ${
+      className={`relative rounded-3xl overflow-hidden transition-all duration-500 select-none group ${
         isCenter
-          ? 'w-[320px] sm:w-[380px] h-[490px] sm:h-[530px] border-amber-400/40 shadow-[0_30px_70px_-15px_rgba(217,119,6,0.35)] ring-1 ring-amber-400/20'
-          : 'w-[260px] sm:w-[290px] h-[400px] sm:h-[430px] border-white/10 opacity-75 hover:opacity-90'
+          ? 'w-[320px] sm:w-[380px] h-[490px] sm:h-[530px] border-2 border-violet-400 shadow-[0_30px_70px_-15px_rgba(124,58,237,0.30)] ring-4 ring-violet-500/15 bg-white'
+          : 'w-[260px] sm:w-[290px] h-[400px] sm:h-[430px] border border-slate-200/80 shadow-[0_15px_40px_rgba(0,0,0,0.08)] opacity-80 hover:opacity-95 bg-white'
       }`}
     >
       <div className="relative w-full h-full">
@@ -23,22 +23,22 @@ const Card = ({ photo, isCenter, totalItems, currentIndex, onExpand }) => {
         {/* Top Floating Controls (Center Card only) */}
         {isCenter && (
           <div className="absolute top-4 left-0 right-0 px-4 flex justify-between items-center z-20">
-            {/* Real functional Expand button */}
+            {/* Real functional Expand button in light glassmorphism */}
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 onExpand(photo);
               }}
               title="Agrandir en plein écran (Espace)"
-              className="bg-black/60 hover:bg-amber-500 hover:text-black backdrop-blur-md border border-amber-400/30 text-amber-300 text-[11px] font-medium px-3 py-1.5 rounded-full flex items-center gap-1.5 transition-all shadow-lg cursor-pointer"
+              className="bg-white/90 hover:bg-violet-600 hover:text-white backdrop-blur-md border border-slate-200 text-slate-800 text-[11px] font-semibold px-3.5 py-1.5 rounded-full flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
             >
-              <Maximize2 className="w-3.5 h-3.5" />
+              <Maximize2 className="w-3.5 h-3.5 text-violet-600 group-hover:text-white" />
               <span>Agrandir</span>
             </button>
 
-            {/* Category Pill */}
-            <span className="bg-black/60 backdrop-blur-md border border-white/20 text-white/90 text-[10px] font-mono tracking-wider uppercase px-2.5 py-1 rounded-full flex items-center gap-1">
-              <Sparkles className="w-3 h-3 text-amber-400" />
+            {/* Category Pill with Violet Accent */}
+            <span className="bg-white/90 backdrop-blur-md border border-slate-200 text-violet-700 text-[10px] font-mono font-bold tracking-wider uppercase px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm">
+              <Sparkles className="w-3 h-3 text-orange-500" />
               {photo.categoryLabel}
             </span>
           </div>
@@ -52,34 +52,34 @@ const Card = ({ photo, isCenter, totalItems, currentIndex, onExpand }) => {
           loading="lazy"
         />
 
-        {/* Gradient dark overlay */}
+        {/* Gradient dark overlay on photo bottom for crisp readability */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent pointer-events-none" />
 
         {/* Card Details */}
         <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6 text-left pointer-events-none">
           <div className="flex justify-between items-end mb-1.5">
-            <h2 className={`font-serif font-bold text-white tracking-wide truncate ${isCenter ? 'text-xl sm:text-2xl' : 'text-base sm:text-lg'}`}>
+            <h2 className={`font-heading font-bold text-white tracking-wide truncate ${isCenter ? 'text-xl sm:text-2xl' : 'text-base sm:text-lg'}`}>
               {photo.title}
             </h2>
             {isCenter && (
-              <span className="text-[11px] text-amber-300/80 font-mono mb-1 shrink-0 ml-2">
+              <span className="text-[11px] text-orange-300 font-mono font-bold mb-1 shrink-0 ml-2">
                 {currentIndex} / {totalItems}
               </span>
             )}
           </div>
 
-          <p className="text-xs text-white/70 line-clamp-2 leading-relaxed font-light mb-3">
+          <p className="text-xs text-slate-200 line-clamp-2 leading-relaxed font-light mb-3">
             {photo.description}
           </p>
 
           {/* Technical Shooting Details */}
-          <div className="flex items-center justify-between text-[11px] font-mono border-t border-white/10 pt-2.5">
-            <div className="flex items-center gap-1.5 text-amber-300/90 truncate">
-              <Camera className="w-3.5 h-3.5 shrink-0 text-amber-400" />
+          <div className="flex items-center justify-between text-[11px] font-mono border-t border-white/15 pt-2.5">
+            <div className="flex items-center gap-1.5 text-violet-300 truncate">
+              <Camera className="w-3.5 h-3.5 shrink-0 text-orange-400" />
               <span className="truncate">{photo.camera}</span>
             </div>
             {isCenter && (
-              <span className="text-white/40 text-[10px] shrink-0 ml-2 hidden sm:inline">
+              <span className="text-white/60 text-[10px] shrink-0 ml-2 hidden sm:inline">
                 {photo.settings}
               </span>
             )}

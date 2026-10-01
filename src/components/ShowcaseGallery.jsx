@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Sparkles, Maximize2, Camera, Sliders, Filter } from 'lucide-react';
+import { Sparkles, Maximize2, Camera } from 'lucide-react';
 import { CATEGORIES } from '../data/photos';
 
 const ShowcaseGallery = ({ remainingPhotos, onSelectPhoto }) => {
@@ -11,38 +11,38 @@ const ShowcaseGallery = ({ remainingPhotos, onSelectPhoto }) => {
   }, [remainingPhotos, selectedCategory]);
 
   return (
-    <section id="showcase-gallery" className="relative w-full py-20 px-4 sm:px-8 bg-neutral-950 text-white overflow-hidden">
+    <section id="showcase-gallery" className="relative w-full py-20 px-4 sm:px-8 bg-slate-50 text-slate-900 overflow-hidden">
       {/* Background Ambient Glows */}
-      <div className="absolute top-1/4 right-10 w-96 h-96 bg-amber-600/10 blur-[130px] pointer-events-none rounded-full" />
-      <div className="absolute bottom-1/4 left-10 w-96 h-96 bg-yellow-500/10 blur-[130px] pointer-events-none rounded-full" />
+      <div className="absolute top-1/4 right-10 w-96 h-96 bg-violet-400/10 blur-[140px] pointer-events-none rounded-full" />
+      <div className="absolute bottom-1/4 left-10 w-96 h-96 bg-orange-400/10 blur-[140px] pointer-events-none rounded-full" />
 
       {/* Section Header */}
       <div className="max-w-6xl mx-auto text-center mb-12">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-400/30 text-amber-300 text-xs font-mono uppercase tracking-wider mb-3">
-          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-violet-50 border border-violet-200/80 text-violet-700 text-xs font-semibold uppercase tracking-wider mb-3 shadow-sm">
+          <Sparkles className="w-3.5 h-3.5 text-orange-500" />
           <span>Collection Intégrale — 22 Œuvres Sélectionnées</span>
         </div>
 
-        <h2 className="font-serif text-3xl sm:text-5xl font-bold tracking-tight text-white">
-          La Traversée des <span className="bg-gradient-to-r from-amber-300 via-amber-400 to-amber-600 bg-clip-text text-transparent">Émotions</span>
+        <h2 className="font-heading text-3xl sm:text-5xl font-black tracking-tight text-slate-950">
+          La Traversée des <span className="bg-gradient-to-r from-violet-600 via-purple-600 to-orange-500 bg-clip-text text-transparent">Émotions</span>
         </h2>
 
-        <p className="text-sm sm:text-base text-white/60 font-light mt-3 max-w-xl mx-auto">
+        <p className="text-sm sm:text-base text-slate-600 font-medium mt-3 max-w-xl mx-auto">
           Chaque image est un instant de vie capturé dans sa vérité la plus pure. Cliquez sur n'importe quel cliché pour l'admirer en haute définition.
         </p>
 
-        {/* Category Filters */}
-        <div className="flex flex-wrap items-center justify-center gap-2 mt-8">
+        {/* Category Filters with EternaCloud Gradient Pills */}
+        <div className="flex flex-wrap items-center justify-center gap-2.5 mt-8">
           {CATEGORIES.map((cat) => {
             const isActive = selectedCategory === cat.id;
             return (
               <button
                 key={cat.id}
                 onClick={() => setSelectedCategory(cat.id)}
-                className={`px-4 py-2 rounded-full text-xs font-medium transition-all duration-300 cursor-pointer flex items-center gap-1.5 ${
+                className={`px-4 sm:px-5 py-2 rounded-full text-xs font-bold transition-all duration-300 cursor-pointer flex items-center gap-1.5 ${
                   isActive
-                    ? 'bg-amber-500 text-neutral-950 font-bold shadow-lg shadow-amber-500/30 scale-105'
-                    : 'bg-white/5 hover:bg-white/10 text-white/70 hover:text-white border border-white/10'
+                    ? 'bg-gradient-to-r from-violet-600 via-purple-600 to-orange-500 text-white shadow-md shadow-violet-500/25 scale-105'
+                    : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200/90 shadow-sm'
                 }`}
               >
                 <span>{cat.label}</span>
@@ -59,7 +59,7 @@ const ShowcaseGallery = ({ remainingPhotos, onSelectPhoto }) => {
             <div
               key={`ribbon-${photo.id}-${i}`}
               onClick={() => onSelectPhoto(photo)}
-              className="relative w-48 sm:w-64 aspect-[3/4] rounded-2xl overflow-hidden border border-white/15 hover:border-amber-400/60 shadow-xl transition-all duration-500 cursor-pointer shrink-0 hover:scale-105 group/item"
+              className="relative w-48 sm:w-64 aspect-[3/4] rounded-2xl overflow-hidden border border-slate-200/90 hover:border-violet-400 shadow-md hover:shadow-xl transition-all duration-500 cursor-pointer shrink-0 hover:scale-105 group/item bg-white"
             >
               <img
                 src={photo.src}
@@ -67,12 +67,12 @@ const ShowcaseGallery = ({ remainingPhotos, onSelectPhoto }) => {
                 loading="lazy"
                 className="w-full h-full object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-60 group-hover/item:opacity-90 transition-opacity" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-transparent opacity-70 group-hover/item:opacity-90 transition-opacity" />
               <div className="absolute bottom-3 left-3 right-3 text-left">
-                <span className="text-[10px] font-mono text-amber-300 block mb-0.5">
+                <span className="text-[10px] font-mono font-bold text-orange-300 block mb-0.5">
                   {photo.categoryLabel}
                 </span>
-                <p className="font-serif text-sm font-bold text-white truncate">
+                <p className="font-heading text-sm font-bold text-white truncate">
                   {photo.title}
                 </p>
               </div>
@@ -81,16 +81,16 @@ const ShowcaseGallery = ({ remainingPhotos, onSelectPhoto }) => {
         </div>
       </div>
 
-      {/* Modern SaaS / Masonry Interactive Grid */}
+      {/* Modern SaaS / Masonry Interactive Grid in Light Luxury Cards */}
       <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 sm:gap-7">
         {filtered.map((photo) => (
           <div
             key={photo.id}
             onClick={() => onSelectPhoto(photo)}
-            className="group relative rounded-3xl overflow-hidden bg-neutral-900/90 border border-white/10 hover:border-amber-400/50 transition-all duration-500 shadow-xl hover:shadow-[0_25px_50px_-10px_rgba(217,119,6,0.3)] cursor-pointer flex flex-col"
+            className="group relative rounded-3xl overflow-hidden bg-white border border-slate-200/90 hover:border-violet-400 transition-all duration-500 shadow-[0_10px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_50px_rgba(124,58,237,0.16)] cursor-pointer flex flex-col"
           >
             {/* Image Container */}
-            <div className="relative aspect-[3/4] overflow-hidden bg-black">
+            <div className="relative aspect-[3/4] overflow-hidden bg-slate-100">
               <img
                 src={photo.src}
                 alt={photo.title}
@@ -98,41 +98,41 @@ const ShowcaseGallery = ({ remainingPhotos, onSelectPhoto }) => {
                 className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
               />
 
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-transparent opacity-60 group-hover:opacity-90 transition-opacity" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/15 to-transparent opacity-60 group-hover:opacity-85 transition-opacity" />
 
               {/* Top Badge */}
               <div className="absolute top-3 left-3">
-                <span className="bg-black/60 backdrop-blur-md border border-white/20 text-white/90 text-[10px] font-mono uppercase px-2.5 py-1 rounded-full flex items-center gap-1">
-                  <Sparkles className="w-2.5 h-2.5 text-amber-400" />
+                <span className="bg-white/90 backdrop-blur-md border border-slate-200 text-violet-800 text-[10px] font-mono font-bold uppercase px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm">
+                  <Sparkles className="w-2.5 h-2.5 text-orange-500" />
                   {photo.categoryLabel}
                 </span>
               </div>
 
-              {/* Hover Zoom Icon */}
+              {/* Hover Zoom Icon with Violet-to-Orange Gradient */}
               <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <div className="w-9 h-9 rounded-full bg-amber-500 text-neutral-950 flex items-center justify-center shadow-xl">
+                <div className="w-9 h-9 rounded-full bg-gradient-to-r from-violet-600 to-orange-500 text-white flex items-center justify-center shadow-lg">
                   <Maximize2 className="w-4 h-4" />
                 </div>
               </div>
             </div>
 
-            {/* Content Details */}
-            <div className="p-5 text-left flex-grow flex flex-col justify-between">
+            {/* Content Details in Light Slate */}
+            <div className="p-5 text-left flex-grow flex flex-col justify-between bg-white">
               <div>
-                <h3 className="font-serif text-lg font-bold text-white group-hover:text-amber-300 transition-colors truncate">
+                <h3 className="font-heading text-lg font-bold text-slate-900 group-hover:text-violet-600 transition-colors truncate">
                   {photo.title}
                 </h3>
-                <p className="text-xs text-white/60 line-clamp-2 mt-1.5 font-light leading-relaxed">
+                <p className="text-xs text-slate-600 line-clamp-2 mt-1.5 font-normal leading-relaxed">
                   {photo.description}
                 </p>
               </div>
 
-              <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-[11px] font-mono text-white/50">
-                <span className="flex items-center gap-1.5 text-amber-300/90 truncate">
-                  <Camera className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] font-mono text-slate-500">
+                <span className="flex items-center gap-1.5 text-violet-700 font-medium truncate">
+                  <Camera className="w-3.5 h-3.5 text-orange-500 shrink-0" />
                   <span className="truncate">{photo.camera}</span>
                 </span>
-                <span className="shrink-0 ml-2">{photo.settings}</span>
+                <span className="shrink-0 ml-2 text-slate-400">{photo.settings}</span>
               </div>
             </div>
           </div>

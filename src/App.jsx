@@ -54,32 +54,32 @@ const App = () => {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-white font-sans selection:bg-amber-500/30 selection:text-amber-200">
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-violet-500/20 selection:text-violet-900 relative overflow-x-hidden">
       {/* 1. Sticky Navigation Header */}
       <Header />
 
-      {/* 2. Hero Section with Video (hero.mp4) */}
+      {/* 2. Hero Section with Video */}
       <div id="hero">
         <HeroVideo onExploreClick={() => scrollTo('featured-3d')} />
       </div>
 
-      {/* 3. Section Carrousel 3D (Seulement 4 images phares, scroll libre à la fin) */}
+      {/* 3. Section Carrousel 3D (4 Masterworks) */}
       <FeaturedCarousel3D
         featuredPhotos={featuredPhotos}
         onExpandPhoto={(photo) => handleOpenLightbox(photo, featuredPhotos)}
         onScrollDown={() => scrollTo('showcase-gallery')}
       />
 
-      {/* 4. Section Défilement des 22 autres images (Style Dribbble SaaS / Showcase interactif) */}
+      {/* 4. Section Défilement des 22 autres images */}
       <ShowcaseGallery
         remainingPhotos={remainingPhotos}
         onSelectPhoto={(photo) => handleOpenLightbox(photo, remainingPhotos)}
       />
 
-      {/* 5. Section Finale : L'Ordinateur 3D Interactif (Three.js inspiré de r3f-portfolio) */}
+      {/* 5. Section Finale : L'Ordinateur 3D Interactif */}
       <Laptop3D photos={PHOTOS_DATA} />
 
-      {/* 6. Lightbox Plein Écran Haute Définition */}
+      {/* 6. Lightbox Plein Écran */}
       {lightboxPhoto && (
         <Lightbox
           photo={lightboxPhoto}

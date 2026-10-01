@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { X, ChevronLeft, ChevronRight, Camera, Sparkles, Sliders, Maximize } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Camera, Sparkles, Sliders } from 'lucide-react';
 
 const Lightbox = ({ photo, onClose, onPrev, onNext, currentIndex, totalItems }) => {
   useEffect(() => {
@@ -17,7 +17,7 @@ const Lightbox = ({ photo, onClose, onPrev, onNext, currentIndex, totalItems }) 
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-2xl p-2 sm:p-6 animate-fadeIn select-none"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-2xl p-2 sm:p-6 animate-fadeIn select-none"
       onClick={onClose}
     >
       {/* Top Header Bar */}
@@ -26,11 +26,11 @@ const Lightbox = ({ photo, onClose, onPrev, onNext, currentIndex, totalItems }) 
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-3">
-          <div className="bg-amber-500/20 border border-amber-400/40 text-amber-300 px-3 py-1 rounded-full text-xs font-mono uppercase tracking-wider flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5" />
+          <div className="bg-white/90 border border-slate-200 text-violet-700 px-3 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-md">
+            <Sparkles className="w-3.5 h-3.5 text-orange-500" />
             <span>{photo.categoryLabel}</span>
           </div>
-          <span className="text-white/60 text-xs font-mono hidden sm:inline">
+          <span className="text-white/80 text-xs font-mono hidden sm:inline">
             {currentIndex + 1} sur {totalItems}
           </span>
         </div>
@@ -39,7 +39,7 @@ const Lightbox = ({ photo, onClose, onPrev, onNext, currentIndex, totalItems }) 
         <button
           onClick={onClose}
           title="Fermer (Échap)"
-          className="w-10 h-10 rounded-full bg-white/10 hover:bg-amber-500 hover:text-black border border-white/20 text-white flex items-center justify-center transition-all cursor-pointer shadow-xl"
+          className="w-10 h-10 rounded-full bg-white/20 hover:bg-gradient-to-r hover:from-violet-600 hover:to-orange-500 hover:text-white border border-white/30 text-white flex items-center justify-center transition-all cursor-pointer shadow-xl"
         >
           <X className="w-5 h-5" />
         </button>
@@ -52,7 +52,7 @@ const Lightbox = ({ photo, onClose, onPrev, onNext, currentIndex, totalItems }) 
           onPrev();
         }}
         title="Photo précédente (←)"
-        className="absolute left-2 sm:left-6 top-1/2 -translate-y-1/2 z-50 w-11 h-11 sm:w-13 sm:h-13 rounded-full bg-black/60 hover:bg-amber-500 hover:text-black border border-white/20 text-white flex items-center justify-center transition-all cursor-pointer shadow-2xl"
+        className="absolute left-2 sm:left-6 top-1/2 -translate-y-1/2 z-50 w-11 h-11 sm:w-13 sm:h-13 rounded-full bg-white/20 hover:bg-gradient-to-r hover:from-violet-600 hover:to-orange-500 hover:text-white border border-white/30 text-white flex items-center justify-center transition-all cursor-pointer shadow-2xl"
       >
         <ChevronLeft className="w-6 h-6" />
       </button>
@@ -64,7 +64,7 @@ const Lightbox = ({ photo, onClose, onPrev, onNext, currentIndex, totalItems }) 
           onNext();
         }}
         title="Photo suivante (→)"
-        className="absolute right-2 sm:right-6 top-1/2 -translate-y-1/2 z-50 w-11 h-11 sm:w-13 sm:h-13 rounded-full bg-black/60 hover:bg-amber-500 hover:text-black border border-white/20 text-white flex items-center justify-center transition-all cursor-pointer shadow-2xl"
+        className="absolute right-2 sm:right-6 top-1/2 -translate-y-1/2 z-50 w-11 h-11 sm:w-13 sm:h-13 rounded-full bg-white/20 hover:bg-gradient-to-r hover:from-violet-600 hover:to-orange-500 hover:text-white border border-white/30 text-white flex items-center justify-center transition-all cursor-pointer shadow-2xl"
       >
         <ChevronRight className="w-6 h-6" />
       </button>
@@ -74,7 +74,7 @@ const Lightbox = ({ photo, onClose, onPrev, onNext, currentIndex, totalItems }) 
         className="relative max-w-full max-h-full flex flex-col items-center justify-center"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="relative group max-h-[75vh] sm:max-h-[82vh] overflow-hidden rounded-2xl border border-white/15 shadow-[0_30px_90px_rgba(0,0,0,0.9)] bg-black">
+        <div className="relative group max-h-[75vh] sm:max-h-[82vh] overflow-hidden rounded-2xl border border-white/20 shadow-[0_30px_90px_rgba(0,0,0,0.8)] bg-black">
           <img
             src={photo.src}
             alt={photo.title}
@@ -83,29 +83,29 @@ const Lightbox = ({ photo, onClose, onPrev, onNext, currentIndex, totalItems }) 
         </div>
 
         {/* Bottom Metadata Card */}
-        <div className="mt-3 sm:mt-4 w-full max-w-2xl bg-neutral-900/90 backdrop-blur-xl border border-white/10 rounded-2xl p-3 sm:p-4 text-center shadow-2xl">
-          <h2 className="font-serif text-lg sm:text-2xl font-bold text-white tracking-wide">
+        <div className="mt-3 sm:mt-4 w-full max-w-2xl bg-white/95 backdrop-blur-xl border border-slate-200 rounded-2xl p-4 text-center shadow-2xl text-slate-900">
+          <h2 className="font-heading text-lg sm:text-2xl font-black text-slate-950 tracking-wide">
             {photo.title}
           </h2>
-          <p className="text-xs sm:text-sm text-white/70 font-light mt-1 max-w-xl mx-auto">
+          <p className="text-xs sm:text-sm text-slate-600 font-normal mt-1 max-w-xl mx-auto leading-relaxed">
             {photo.description}
           </p>
 
-          <div className="mt-2.5 pt-2 border-t border-white/10 flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-[11px] font-mono text-amber-300/80">
-            <span className="flex items-center gap-1.5">
-              <Camera className="w-3.5 h-3.5 text-amber-400" />
+          <div className="mt-2.5 pt-2 border-t border-slate-200 flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-[11px] font-mono text-violet-700">
+            <span className="flex items-center gap-1.5 font-semibold">
+              <Camera className="w-3.5 h-3.5 text-orange-500" />
               {photo.camera}
             </span>
-            <span className="flex items-center gap-1.5 text-white/50">
+            <span className="flex items-center gap-1.5 text-slate-500">
               <Sliders className="w-3.5 h-3.5" />
               {photo.settings}
             </span>
-            <span className="text-white/40">
+            <span className="text-slate-400">
               {photo.width} × {photo.height} px
             </span>
           </div>
 
-          <div className="mt-2 text-[10px] uppercase tracking-widest text-white/40 font-mono">
+          <div className="mt-2 text-[10px] uppercase tracking-widest text-slate-400 font-mono">
             Studio Ezélia — « L'art à portée de main »
           </div>
         </div>

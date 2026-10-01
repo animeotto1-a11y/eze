@@ -4,9 +4,12 @@
   body {
     font-family: 'Plus Jakarta Sans', sans-serif;
     scroll-behavior: smooth;
+    background-color: #f8fafc;
+    color: #0f172a;
   }
-  h1, h2, h3, .font-serif {
-    font-family: 'Cinzel', serif;
+  h1, h2, h3, .font-serif, .font-heading {
+    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+    letter-spacing: -0.025em;
   }
 }
 
@@ -71,45 +74,20 @@
   animation: marquee 40s linear infinite;
 }
 
-/* R3F PORTFOLIO NOTEBOOK 3D BUTTONS & PULSE */
-.htmlButton {
-  transition: all 0.4s ease;
-  color: white;
-  border: 1.5px solid rgba(251, 191, 36, 0.8);
-  cursor: pointer;
-  text-align: center;
-  background-color: rgba(10, 10, 10, 0.85);
-  backdrop-filter: blur(8px);
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  outline: none;
-  border-radius: 50%;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
-}
-
+/* 3D Power Button Pulse: EternaCloud Violet & Sunset Orange Glow */
 .pulsing {
-  animation: animate-pulse 2.5s ease-out infinite;
+  animation: animate-pulse-violet 2.2s ease-out infinite;
 }
 
-.htmlButton:hover {
-  background-color: #fbbf24;
-  color: #000;
-  border-color: #fbbf24;
-  transform: scale(1.15);
-}
-
-@keyframes animate-pulse {
+@keyframes animate-pulse-violet {
   0% {
-    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.9);
+    box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.8);
   }
   50% {
-    box-shadow: 0 0 0 10px rgba(251, 191, 36, 0);
+    box-shadow: 0 0 0 12px rgba(249, 115, 22, 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0);
+    box-shadow: 0 0 0 0 rgba(124, 58, 237, 0);
   }
 }
 
@@ -128,5 +106,3 @@
 .animate-vibrate {
   animation: hapticVibrate 0.65s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
 }
-
-

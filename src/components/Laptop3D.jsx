@@ -59,8 +59,8 @@ function LaptopModel({
   return (
     <>
       <Env />
-      <ambientLight intensity={0.8} />
-      <directionalLight position={[5, 10, 5]} intensity={1.3} castShadow />
+      <ambientLight intensity={1.1} />
+      <directionalLight position={[5, 10, 5]} intensity={1.5} castShadow />
 
       {/* LOWERED LAPTOP POSITION: position={[0, -0.72, 0]} so screen top never touches header */}
       <group ref={groupRef} position={[0, -0.72, 0]} scale={[1, 1, 1]}>
@@ -98,10 +98,10 @@ function LaptopModel({
             <div className="relative group">
               <button
                 onClick={onTogglePower}
-                className={`p-2.5 rounded-full border-2 flex items-center justify-center transition-all cursor-pointer shadow-2xl ${
+                className={`p-2.5 rounded-full border-2 flex items-center justify-center transition-all cursor-pointer shadow-xl ${
                   isPoweredOn
-                    ? 'bg-emerald-500 border-emerald-300 text-neutral-950 scale-100 hover:scale-110 shadow-emerald-500/50'
-                    : 'bg-amber-500 border-amber-300 text-neutral-950 animate-pulse scale-110 hover:scale-125 shadow-amber-500/50'
+                    ? 'bg-emerald-500 border-emerald-300 text-white scale-100 hover:scale-110 shadow-emerald-500/50'
+                    : 'bg-gradient-to-r from-violet-600 to-orange-500 border-white text-white animate-pulse scale-110 hover:scale-125 shadow-violet-500/50'
                 }`}
                 title={isPoweredOn ? "Éteindre l'ordinateur" : "Allumer l'ordinateur"}
               >
@@ -111,13 +111,13 @@ function LaptopModel({
               {/* Status Badge Floating above the power button on the keyboard */}
               <div
                 onClick={onTogglePower}
-                className={`absolute -top-10 left-1/2 -translate-x-1/2 whitespace-nowrap px-3 py-1 rounded-full text-[11px] font-mono font-bold tracking-wider cursor-pointer border shadow-xl flex items-center gap-1.5 transition-all ${
+                className={`absolute -top-10 left-1/2 -translate-x-1/2 whitespace-nowrap px-3 py-1 rounded-full text-[11px] font-mono font-bold tracking-wider cursor-pointer border shadow-lg flex items-center gap-1.5 transition-all ${
                   isPoweredOn
-                    ? 'bg-neutral-900/95 border-emerald-400 text-emerald-400 shadow-emerald-500/20'
-                    : 'bg-neutral-900/95 border-amber-400 text-amber-300 animate-bounce shadow-amber-500/30'
+                    ? 'bg-slate-900 border-emerald-400 text-emerald-400 shadow-emerald-500/20'
+                    : 'bg-slate-900 border-violet-400 text-violet-200 animate-bounce shadow-violet-500/30'
                 }`}
               >
-                <span className={`w-2 h-2 rounded-full ${isPoweredOn ? 'bg-emerald-400' : 'bg-amber-400 animate-ping'}`} />
+                <span className={`w-2 h-2 rounded-full ${isPoweredOn ? 'bg-emerald-400' : 'bg-orange-400 animate-ping'}`} />
                 <span>{isPoweredOn ? 'ALLUMÉ • ÉTEINDRE' : '⚡ ALLUMER LE PC'}</span>
               </div>
             </div>
@@ -127,10 +127,10 @@ function LaptopModel({
 
       <ContactShadows
         position={[0, -1.20, 0]}
-        opacity={0.45}
-        scale={8.5}
-        blur={1.4}
-        color="#000000"
+        opacity={0.25}
+        scale={8.8}
+        blur={1.8}
+        color="#0f172a"
       />
     </>
   );
@@ -144,7 +144,7 @@ const Laptop3D = () => {
 
   // Scroll Progress: 0 (closed) -> 1 (fully open)
   const [openProgress, setOpenProgress] = useState(0);
-  const [isPoweredOn, setIsPoweredOn] = useState(false); // Starts powered off so user can press the power button!
+  const [isPoweredOn, setIsPoweredOn] = useState(false); // Starts powered off
   const [isVibrating, setIsVibrating] = useState(false);
   const [showVibrationAlert, setShowVibrationAlert] = useState(false);
   const hasTriggeredVibrationRef = useRef(false);
@@ -173,11 +173,8 @@ const Laptop3D = () => {
       if (progress <= 0) {
         openingFraction = 0;
       } else if (progress < 0.50) {
-        // Slow, gradual opening across the first 50% of the long 450vh track
         openingFraction = progress / 0.50;
       } else {
-        // Once past 50%, IT STAYS 100% OPEN! It NEVER closes as you scroll down!
-        // It only closes when you scroll back UP past 50%!
         openingFraction = 1.0;
       }
 
@@ -189,19 +186,16 @@ const Laptop3D = () => {
         setIsVibrating(true);
         setShowVibrationAlert(true);
 
-        // Native device vibration (phones, tablets, supported devices)
         if (typeof navigator !== 'undefined' && navigator.vibrate) {
           try {
             navigator.vibrate([80, 100, 80, 100, 150]);
           } catch (e) {}
         }
 
-        // Auto-stop tremor effect after 700ms
         setTimeout(() => {
           setIsVibrating(false);
         }, 700);
 
-        // Keep visual alert banner for 4.5 seconds
         setTimeout(() => {
           setShowVibrationAlert(false);
         }, 4500);
@@ -229,9 +223,7 @@ const Laptop3D = () => {
     prevPointerRef.current = { x: e.clientX, y: e.clientY };
 
     setTargetRotation((prev) => ({
-      // Pitch (X-axis) strictly bounded [-0.10, +0.25]
       x: Math.min(Math.max(prev.x + deltaY * 0.003, -0.10), 0.25),
-      // Yaw (Y-axis) strictly bounded [-0.60, +0.60]
       y: Math.min(Math.max(prev.y + deltaX * 0.005, -0.60), 0.60),
     }));
   };
@@ -247,46 +239,46 @@ const Laptop3D = () => {
   const openPercent = Math.round(openProgress * 100);
 
   return (
-    <div className="w-full bg-neutral-950">
+    <div className="w-full bg-slate-50">
       {/* 1. DEDICATED SCROLL TRACK FOR 3D LAPTOP (450vh) */}
       <section
         ref={containerRef}
         id="laptop-3d"
-        className="relative w-full h-[450vh] bg-neutral-950 text-white select-none"
+        className="relative w-full h-[450vh] bg-slate-50 text-slate-900 select-none"
       >
-        {/* Sticky Fullscreen Stage: Pure, clean 3D laptop product experience */}
+        {/* Sticky Fullscreen Stage: Pure, clean 3D laptop product experience in Light Theme */}
         <div
           className={`sticky top-0 h-screen w-full overflow-hidden flex flex-col justify-between pt-6 pb-4 px-6 transition-transform ${
             isVibrating ? 'animate-vibrate' : ''
           }`}
         >
-          {/* Background Ambience */}
-          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[750px] h-[450px] bg-amber-500/10 blur-[160px] pointer-events-none rounded-full" />
-          <div className="absolute inset-0 bg-radial from-transparent via-black/50 to-neutral-950 pointer-events-none" />
+          {/* Background Ambience with Soft EternaCloud Tones */}
+          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[750px] h-[450px] bg-violet-400/10 blur-[160px] pointer-events-none rounded-full" />
+          <div className="absolute top-1/3 right-1/4 w-[500px] h-[400px] bg-orange-400/10 blur-[150px] pointer-events-none rounded-full" />
 
-          {/* Section Header (Compact & High Enough to give 3D Laptop maximum clearance) */}
+          {/* Section Header */}
           <div className="relative z-10 max-w-4xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/5 border border-amber-400/30 text-amber-300 text-[11px] font-mono uppercase tracking-widest shadow-xl mb-1.5">
-              <Sparkles className="w-3 h-3 text-amber-400" />
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-violet-50 border border-violet-200/90 text-violet-700 text-[11px] font-semibold uppercase tracking-wider shadow-sm mb-1.5">
+              <Sparkles className="w-3 h-3 text-orange-500" />
               <span>Studio Ezélia • Modèle 3D Pur</span>
             </div>
 
-            <h2 className="font-serif text-2xl sm:text-4xl md:text-5xl font-extrabold text-white mb-1">
-              L'Ordinateur <span className="bg-gradient-to-r from-amber-200 via-amber-400 to-amber-600 bg-clip-text text-transparent">Connecté</span>
+            <h2 className="font-heading text-2xl sm:text-4xl md:text-5xl font-black text-slate-950 mb-1">
+              L'Ordinateur <span className="bg-gradient-to-r from-violet-600 via-purple-600 to-orange-500 bg-clip-text text-transparent">Connecté</span>
             </h2>
 
-            <p className="text-xs sm:text-sm text-amber-100/90 font-light italic max-w-lg mx-auto">
+            <p className="text-xs sm:text-sm text-slate-600 font-medium max-w-lg mx-auto">
               « L'art à portée de main » — Faites défiler la molette lentement pour ouvrir l'ordinateur en 3D.
             </p>
           </div>
 
-          {/* Clean Status & Recenter Row (NO duplicate power button: only the 3D button on keyboard deck) */}
+          {/* Clean Status & Recenter Row (NO duplicate power button: only on the keyboard deck) */}
           <div className="relative z-20 max-w-xl mx-auto flex items-center justify-center gap-3">
             {/* Clapet State Badge */}
-            <div className="px-3.5 py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-xs font-mono flex items-center gap-2 shadow-lg">
-              <Laptop className="w-3.5 h-3.5 text-amber-400" />
+            <div className="px-3.5 py-1.5 rounded-full bg-white/90 backdrop-blur-md border border-slate-200 text-xs font-mono font-medium flex items-center gap-2 shadow-sm">
+              <Laptop className="w-3.5 h-3.5 text-violet-600" />
               <span>Clapet :</span>
-              <span className={openPercent >= 100 ? 'text-emerald-400 font-bold' : 'text-amber-400 font-bold'}>
+              <span className={openPercent >= 100 ? 'text-emerald-600 font-bold' : 'text-orange-500 font-bold'}>
                 {openPercent >= 100 ? 'Ouvert à 100%' : `${openPercent}% (en cours d'ouverture...)`}
               </span>
             </div>
@@ -294,9 +286,9 @@ const Laptop3D = () => {
             {/* Recenter Button */}
             <button
               onClick={resetRotation}
-              className="px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-mono flex items-center gap-1.5 transition-all cursor-pointer shadow-lg"
+              className="px-3.5 py-1.5 rounded-full bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-mono font-medium flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
             >
-              <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
+              <RotateCcw className="w-3.5 h-3.5 text-violet-600" />
               <span>Recentrer 3D</span>
             </button>
           </div>
@@ -304,14 +296,14 @@ const Laptop3D = () => {
           {/* Vibration Alert Banner */}
           <div className="relative z-30 h-8 flex items-center justify-center">
             {showVibrationAlert && (
-              <div className="inline-flex items-center gap-2 px-5 py-1.5 rounded-full bg-gradient-to-r from-amber-500/30 via-emerald-500/30 to-amber-500/30 border-2 border-amber-400/80 backdrop-blur-xl text-amber-200 text-xs font-mono shadow-2xl animate-bounce">
-                <Vibrate className="w-4 h-4 text-amber-400 animate-pulse" />
+              <div className="inline-flex items-center gap-2 px-5 py-1.5 rounded-full bg-white/95 border-2 border-violet-400 backdrop-blur-xl text-violet-800 text-xs font-mono font-bold shadow-xl animate-bounce">
+                <Vibrate className="w-4 h-4 text-orange-500 animate-pulse" />
                 <span>📳 ALERTE VIBRATION : L'ordinateur est 100% ouvert !</span>
               </div>
             )}
           </div>
 
-          {/* Pure 3D Canvas: Lowered position gives the open laptop screen full clearance */}
+          {/* Pure 3D Canvas */}
           <div
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
@@ -321,8 +313,8 @@ const Laptop3D = () => {
           >
             <Suspense
               fallback={
-                <div className="w-full h-full flex flex-col items-center justify-center text-amber-300 font-mono text-sm">
-                  <div className="w-10 h-10 border-2 border-amber-400 border-t-transparent rounded-full animate-spin mb-3" />
+                <div className="w-full h-full flex flex-col items-center justify-center text-violet-600 font-mono text-sm">
+                  <div className="w-10 h-10 border-2 border-violet-500 border-t-transparent rounded-full animate-spin mb-3" />
                   <span>Chargement du modèle 3D...</span>
                 </div>
               }
@@ -350,18 +342,18 @@ const Laptop3D = () => {
 
           {/* Bottom Interaction Guide */}
           <div className="relative z-10 flex flex-col items-center justify-center gap-1 text-center pb-2">
-            <div className="flex items-center gap-2 text-xs font-mono text-white/50">
-              <MousePointer className="w-3.5 h-3.5 text-amber-400" />
+            <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
+              <MousePointer className="w-3.5 h-3.5 text-violet-600" />
               <span>Glissez à la souris pour faire pivoter • Bouton POWER sur le coin supérieur gauche du clavier</span>
             </div>
             {openPercent >= 100 ? (
-              <span className="text-[11px] font-mono text-emerald-400/90 flex items-center gap-1">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="text-[11px] font-mono font-medium text-emerald-600 flex items-center gap-1">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                 <span>L'ordinateur reste grand ouvert • Cliquez sur l'écran pour visiter la page Facebook</span>
               </span>
             ) : (
-              <span className="text-[11px] font-mono text-amber-300/70 flex items-center gap-1">
-                <ChevronDown className="w-3.5 h-3.5 text-amber-400 animate-bounce" />
+              <span className="text-[11px] font-mono font-medium text-orange-500 flex items-center gap-1">
+                <ChevronDown className="w-3.5 h-3.5 text-orange-500 animate-bounce" />
                 <span>Faites rouler la molette lentement vers le bas pour ouvrir le PC...</span>
               </span>
             )}
@@ -369,22 +361,23 @@ const Laptop3D = () => {
         </div>
       </section>
 
-      {/* 2. COMPLETELY SEPARATE VIP BOOKING & FOOTER SECTION */}
-      <div className="relative z-30 w-full bg-neutral-950 py-24 border-t border-white/10">
+      {/* 2. VIP BOOKING & FOOTER SECTION in Light Luxury Card Style */}
+      <div className="relative z-30 w-full bg-slate-50 py-24 border-t border-slate-200">
         <div className="max-w-4xl mx-auto px-6">
-          <div className="rounded-3xl bg-gradient-to-br from-white/10 via-white/5 to-transparent border border-amber-500/30 p-8 sm:p-10 backdrop-blur-xl shadow-2xl relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="rounded-3xl bg-white border border-slate-200/90 p-8 sm:p-10 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.06)] relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-80 h-80 bg-violet-400/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-80 h-80 bg-orange-400/10 rounded-full blur-3xl pointer-events-none" />
 
             <div className="flex flex-col md:flex-row items-center justify-between gap-8 relative z-10">
               <div>
-                <div className="flex items-center gap-2 text-amber-400 text-xs font-mono uppercase tracking-widest mb-2">
-                  <ShieldCheck className="w-4 h-4" />
+                <div className="inline-flex items-center gap-2 text-violet-700 bg-violet-50 px-3 py-1 rounded-full border border-violet-200 text-xs font-semibold uppercase tracking-wider mb-3">
+                  <ShieldCheck className="w-4 h-4 text-orange-500" />
                   <span>Réservations VIP Saison 2026</span>
                 </div>
-                <h3 className="font-serif text-2xl sm:text-4xl font-bold text-white mb-2">
+                <h3 className="font-heading text-2xl sm:text-4xl font-black text-slate-950 mb-2">
                   Sublimez Votre Grand Jour
                 </h3>
-                <p className="text-neutral-300 text-sm max-w-md leading-relaxed">
+                <p className="text-slate-600 text-sm max-w-md leading-relaxed font-normal">
                   Mariages d'exception, portraits impériaux et célébrations prestigieuses. Un accompagnement sur mesure pour immortaliser vos plus précieux instants.
                 </p>
               </div>
@@ -394,7 +387,7 @@ const Laptop3D = () => {
                   href="https://wa.me/2250700000000"
                   target="_blank"
                   rel="noreferrer"
-                  className="w-full sm:w-auto px-7 py-4 rounded-full bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 hover:from-amber-400 hover:to-amber-600 text-neutral-950 font-bold text-sm tracking-wider uppercase transition-all shadow-xl shadow-amber-500/25 flex items-center justify-center gap-2 cursor-pointer hover:scale-105"
+                  className="w-full sm:w-auto px-7 py-4 rounded-full bg-gradient-to-r from-violet-600 via-purple-600 to-orange-500 hover:from-violet-500 hover:to-orange-400 text-white font-bold text-sm tracking-wider uppercase transition-all shadow-xl shadow-violet-500/25 flex items-center justify-center gap-2 cursor-pointer hover:scale-105"
                 >
                   <Calendar className="w-4 h-4" />
                   <span>Réserver une Séance</span>
@@ -402,9 +395,9 @@ const Laptop3D = () => {
 
                 <a
                   href="tel:+2250700000000"
-                  className="w-full sm:w-auto px-6 py-4 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-mono flex items-center justify-center gap-2 transition-all cursor-pointer"
+                  className="w-full sm:w-auto px-6 py-4 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-800 text-xs font-mono font-medium flex items-center justify-center gap-2 transition-all cursor-pointer"
                 >
-                  <Phone className="w-4 h-4 text-amber-400" />
+                  <Phone className="w-4 h-4 text-violet-600" />
                   <span>+225 07 00 00 00 00</span>
                 </a>
               </div>
