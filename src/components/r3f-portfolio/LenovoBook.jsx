@@ -1,12 +1,12 @@
 import React from 'react';
 import { meshBounds } from '@react-three/drei';
 
-export default function LenovoBook({ nodes, materials, refName }) {
+export default function LenovoBook({ nodes, materials, refName, topRef }) {
   if (!nodes || !nodes.Macbook) return null;
 
   return (
     <mesh
-      name="LenovoBook"
+      name="Macbook"
       geometry={nodes.Macbook.geometry}
       material={materials.PaletteMaterial001}
       position={[0, 0.519, 0]}
@@ -16,6 +16,7 @@ export default function LenovoBook({ nodes, materials, refName }) {
     >
       <group
         name="Top"
+        ref={topRef}
         position={[0.007, -0.472, -10.412]}
         rotation={[1.358, 0, 0]}
         scale={5.796}

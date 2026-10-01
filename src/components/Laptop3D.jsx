@@ -18,17 +18,9 @@ import {
 import LenovoBook from './r3f-portfolio/LenovoBook';
 import Env from './r3f-portfolio/Env';
 import RectLight from './r3f-portfolio/RectLight';
-import StudioScreen from './r3f-portfolio/StudioScreen';
 import Footer from './Footer';
 
-// Quaternion values extracted directly from the GLTF Open animation
-// Start: Closed flat on chassis; End: Open upright at ~110°
-const qClosed = new THREE.Quaternion(-1.0, 0, 0, 0.0013);
-const qOpen = new THREE.Quaternion(0.6279, 0, 0, 0.7783);
-const pClosed = new THREE.Vector3(0.0075, -0.4106, -10.4124);
-const pOpen = new THREE.Vector3(0.0075, -0.4718, -10.4124);
-
-// 3D Laptop Model Scene: direct quaternion slerp for 100% reliable opening & rock-solid mouse drag
+// 3D Laptop Model Scene: direct Euler lerp on topRef for 100% reliable progressive opening
 function LaptopModel({
   openProgress,
   isPoweredOn,
@@ -39,12 +31,13 @@ function LaptopModel({
   const { nodes, materials } = useGLTF('/models/lenovo-notebook.glb');
   const groupRef = useRef();
   const lenovoBookRef = useRef();
+  const topRef = useRef();
 
-  // Directly slerp the Top node so it NEVER loops, NEVER snaps shut, and stays open permanently
+  // Directly lerp topRef from Math.PI (closed) to 1.358 rad (open)
   useFrame(() => {
-    if (nodes?.Top) {
-      nodes.Top.quaternion.slerpQuaternions(qClosed, qOpen, openProgress);
-      nodes.Top.position.lerpVectors(pClosed, pOpen, openProgress);
+    if (topRef.current) {
+      topRef.current.rotation.x = THREE.MathUtils.lerp(Math.PI, 1.358, openProgress);
+      topRef.current.position.y = THREE.MathUtils.lerp(-0.4106, -0.4718, openProgress);
     }
 
     // Smooth bounded rotation (Yaw [-35°, +35°], Pitch [-7°, +15°]) so laptop NEVER flips or disappears
@@ -62,8 +55,6 @@ function LaptopModel({
     }
   });
 
-  const isScreenVisible = openProgress >= 0.92;
-
   return (
     <>
       <Env />
@@ -71,29 +62,22 @@ function LaptopModel({
       <directionalLight position={[5, 10, 5]} intensity={1.3} castShadow />
 
       <group ref={groupRef} position={[0, -0.2, 0]} scale={[1, 1, 1]}>
-        {/* Real Lenovo 3D Notebook Mesh */}
+        {/* Real Lenovo 3D Notebook Mesh with topRef for direct progressive lid rotation */}
         <LenovoBook
           nodes={nodes}
           materials={materials}
           refName={lenovoBookRef}
+          topRef={topRef}
         />
 
-        {/* Ambient screen glow on keyboard */}
+        {/* Ambient screen glow on keyboard when powered on and open */}
         <RectLight
           lightRef={lightRef}
-          intensity={isPoweredOn && isScreenVisible ? 2.8 : 0}
+          intensity={isPoweredOn && openProgress >= 0.85 ? 3.0 : 0}
         />
 
-        {/* Studio Screen displays ONLY when lid is fully open at ~110° */}
-        {isScreenVisible && (
-          <StudioScreen
-            isPoweredOn={isPoweredOn}
-            onTogglePower={onTogglePower}
-          />
-        )}
-
-        {/* Physical 3D Power Button on Keyboard Deck */}
-        {openProgress >= 0.8 && (
+        {/* Physical 3D Power Button on the Laptop Keyboard Deck */}
+        {openProgress >= 0.6 && (
           <Html
             position={[1.15, 0.52, -0.98]}
             rotation={[-Math.PI / 2.3, 0, 0]}
@@ -103,12 +87,12 @@ function LaptopModel({
           >
             <button
               onClick={onTogglePower}
-              className={`p-2 rounded-full border-2 flex items-center justify-center transition-all cursor-pointer shadow-xl ${
+              className={`p-2 rounded-full border-2 flex items-center justify-center transition-all cursor-pointer shadow-2xl ${
                 isPoweredOn
                   ? 'bg-emerald-500 border-emerald-300 text-neutral-950 scale-100 hover:scale-110'
                   : 'bg-amber-500 border-amber-300 text-neutral-950 animate-pulse scale-110 hover:scale-125'
               }`}
-              title={isPoweredOn ? 'Éteindre le PC' : 'Allumer le PC'}
+              title={isPoweredOn ? "Éteindre l'ordinateur" : "Allumer l'ordinateur"}
             >
               <Power className="w-3.5 h-3.5" />
             </button>
@@ -135,7 +119,7 @@ const Laptop3D = () => {
 
   // Scroll Progress: 0 (closed) -> 1 (fully open)
   const [openProgress, setOpenProgress] = useState(0);
-  const [isPoweredOn, setIsPoweredOn] = useState(true);
+  const [isPoweredOn, setIsPoweredOn] = useState(false); // Starts powered off so user can press the power button!
   const [isVibrating, setIsVibrating] = useState(false);
   const [showVibrationAlert, setShowVibrationAlert] = useState(false);
   const hasTriggeredVibrationRef = useRef(false);
@@ -168,7 +152,7 @@ const Laptop3D = () => {
         openingFraction = progress / 0.50;
       } else {
         // Once past 50%, IT STAYS 100% OPEN! It NEVER closes as you scroll down!
-        // It only closes when you scroll back up past 50%!
+        // It only closes when you scroll back UP past 50%!
         openingFraction = 1.0;
       }
 
@@ -245,7 +229,7 @@ const Laptop3D = () => {
         id="laptop-3d"
         className="relative w-full h-[450vh] bg-neutral-950 text-white select-none"
       >
-        {/* Sticky Fullscreen Stage: Keeps only the 3D laptop in view until completely finished */}
+        {/* Sticky Fullscreen Stage: Pure, clean 3D laptop product experience */}
         <div
           className={`sticky top-0 h-screen w-full overflow-hidden flex flex-col justify-between py-10 px-6 transition-transform ${
             isVibrating ? 'animate-vibrate' : ''
@@ -259,7 +243,7 @@ const Laptop3D = () => {
           <div className="relative z-10 max-w-4xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-amber-400/30 text-amber-300 text-xs font-mono uppercase tracking-widest shadow-xl mb-3">
               <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              <span>Studio Ezélia • Expérience 3D Interactive</span>
+              <span>Studio Ezélia • Modèle 3D Pur</span>
             </div>
 
             <h2 className="font-serif text-3xl sm:text-5xl md:text-6xl font-extrabold text-white mb-2">
@@ -267,11 +251,11 @@ const Laptop3D = () => {
             </h2>
 
             <p className="text-sm sm:text-base text-amber-100/90 font-light italic max-w-xl mx-auto">
-              « L'art à portée de main » — Faites défiler la molette lentement pour ouvrir l'ordinateur.
+              « L'art à portée de main » — Faites défiler la molette lentement pour ouvrir l'ordinateur en 3D.
             </p>
           </div>
 
-          {/* Prominent Controls Bar with HIGH-VISIBILITY Power Button */}
+          {/* Prominent Controls Bar with Standalone Power Button */}
           <div className="relative z-20 max-w-3xl mx-auto flex flex-wrap items-center justify-center gap-3">
             {/* Clapet State Badge */}
             <div className="px-4 py-2 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-xs font-mono flex items-center gap-2 shadow-lg">
@@ -282,7 +266,7 @@ const Laptop3D = () => {
               </span>
             </div>
 
-            {/* VERY CLEAR, LARGE BUTTON TO TURN COMPUTER SCREEN ON/OFF */}
+            {/* UNMISTAKABLE BUTTON TO TURN COMPUTER ON/OFF */}
             <button
               onClick={togglePower}
               className={`px-6 py-2.5 rounded-full font-mono text-xs uppercase tracking-wider flex items-center gap-2.5 transition-all shadow-xl cursor-pointer ${
@@ -310,12 +294,12 @@ const Laptop3D = () => {
             {showVibrationAlert && (
               <div className="inline-flex items-center gap-2.5 px-6 py-2 rounded-full bg-gradient-to-r from-amber-500/30 via-emerald-500/30 to-amber-500/30 border-2 border-amber-400/80 backdrop-blur-xl text-amber-200 text-xs font-mono shadow-2xl animate-bounce">
                 <Vibrate className="w-4 h-4 text-amber-400 animate-pulse" />
-                <span>📳 ALERTE VIBRATION : Ordinateur ouvert à 100% & Écran Connecté !</span>
+                <span>📳 ALERTE VIBRATION : L'ordinateur est 100% ouvert !</span>
               </div>
             )}
           </div>
 
-          {/* 3D Canvas with safe, bounded mouse drag */}
+          {/* Pure 3D Canvas: ONLY the laptop, zero floating photos, zero frames */}
           <div
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
@@ -356,12 +340,12 @@ const Laptop3D = () => {
           <div className="relative z-10 flex flex-col items-center justify-center gap-1 text-center">
             <div className="flex items-center gap-2 text-xs font-mono text-white/50">
               <MousePointer className="w-3.5 h-3.5 text-amber-400" />
-              <span>Glissez à la souris pour faire pivoter à 360° sans quitter l'écran</span>
+              <span>Glissez à la souris pour faire pivoter le PC à 360°</span>
             </div>
             {openPercent >= 100 ? (
               <span className="text-[11px] font-mono text-emerald-400/90 flex items-center gap-1">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                <span>L'ordinateur reste grand ouvert • Faites défiler pour accéder à la réservation VIP</span>
+                <span>L'ordinateur reste grand ouvert • Faites défiler la molette vers le haut pour refermer</span>
               </span>
             ) : (
               <span className="text-[11px] font-mono text-amber-300/70 flex items-center gap-1">
@@ -373,7 +357,7 @@ const Laptop3D = () => {
         </div>
       </section>
 
-      {/* 2. COMPLETELY SEPARATE VIP BOOKING & FOOTER SECTION (Positioned BELOW the 450vh stage so it CANNOT overlap!) */}
+      {/* 2. COMPLETELY SEPARATE VIP BOOKING & FOOTER SECTION */}
       <div className="relative z-30 w-full bg-neutral-950 py-24 border-t border-white/10">
         <div className="max-w-4xl mx-auto px-6">
           <div className="rounded-3xl bg-gradient-to-br from-white/10 via-white/5 to-transparent border border-amber-500/30 p-8 sm:p-10 backdrop-blur-xl shadow-2xl relative overflow-hidden">
