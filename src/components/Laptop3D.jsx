@@ -1,398 +1,358 @@
-import React, { useEffect, useRef, useState } from 'react';
-import * as THREE from 'three';
-import { Sparkles, RotateCcw, Monitor, Camera, Phone, Mail } from 'lucide-react';
+import React, { useRef, useState, useEffect, Suspense } from 'react';
+import { Canvas } from '@react-three/fiber';
+import { PresentationControls, ContactShadows, useGLTF, useAnimations } from '@react-three/drei';
+import { LoopOnce } from 'three';
+import gsap from 'gsap';
+import {
+  Laptop,
+  Power,
+  RotateCw,
+  Sparkles,
+  Volume2,
+  VolumeX,
+  Phone,
+  Calendar,
+  Layers,
+  ArrowUpRight,
+  ShieldCheck,
+  MousePointer
+} from 'lucide-react';
+import LenovoBook from './r3f-portfolio/LenovoBook';
+import Env from './r3f-portfolio/Env';
+import RectLight from './r3f-portfolio/RectLight';
+import StudioScreen from './r3f-portfolio/StudioScreen';
+import useNotebook from './r3f-portfolio/useNotebook';
+import Footer from './Footer';
 
-const Laptop3D = ({ photos }) => {
-  const mountRef = useRef(null);
-  const [currentScreenIndex, setCurrentScreenIndex] = useState(0);
+// Inner 3D Laptop Scene leveraging lenovo-notebook.glb and GLTF animations
+function LaptopScene({ lightRef, bootScreenRef, screenRef }) {
+  const { nodes, materials, animations } = useGLTF('/models/lenovo-notebook.glb');
+  const groupRef = useRef();
+  const lenovoBookRef = useRef();
 
-  // References for three.js scene manipulation
-  const sceneRef = useRef(null);
-  const laptopGroupRef = useRef(null);
-  const screenCanvasRef = useRef(null);
-  const screenTextureRef = useRef(null);
+  const isOpen = useNotebook((state) => state.isOpen);
+  const isPoweredOn = useNotebook((state) => state.isPoweredOn);
+  const isFinishedBooting = useNotebook((state) => state.isFinishedBooting);
 
-  // Cycle photos on laptop screen
+  const animationsObject = useAnimations(animations, groupRef);
+
+  // Initialize laptop in open state on first render
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentScreenIndex((prev) => (prev + 1) % photos.length);
-    }, 3500);
-    return () => clearInterval(timer);
-  }, [photos.length]);
+    if (animationsObject?.actions?.['Open']) {
+      const openAction = animationsObject.actions['Open'];
+      openAction.setLoop(LoopOnce, 1);
+      openAction.clampWhenFinished = true;
+      openAction.play();
+      // Jump to end of Open animation
+      openAction.time = openAction.getClip().duration;
+    }
+  }, [animationsObject?.actions]);
 
-  // Update canvas texture whenever currentScreenIndex changes
+  // Synchronize 3D opening & closing animation when Zustand isOpen state changes
   useEffect(() => {
-    if (!screenCanvasRef.current || !screenTextureRef.current) return;
-    const canvas = screenCanvasRef.current;
-    const ctx = canvas.getContext('2d');
-    const photo = photos[currentScreenIndex];
+    if (!animationsObject?.actions) return;
 
-    if (!photo) return;
+    if (isOpen) {
+      const closeAction = animationsObject.actions['Close'];
+      if (closeAction) closeAction.stop();
 
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.src = photo.src;
-    img.onload = () => {
-      // Draw background
-      ctx.fillStyle = '#09090b';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Draw photo with cover
-      const hRatio = canvas.width / img.width;
-      const vRatio = canvas.height / img.height;
-      const ratio = Math.max(hRatio, vRatio);
-      const centerShiftX = (canvas.width - img.width * ratio) / 2;
-      const centerShiftY = (canvas.height - img.height * ratio) / 2;
-
-      ctx.drawImage(
-        img,
-        0,
-        0,
-        img.width,
-        img.height,
-        centerShiftX,
-        centerShiftY,
-        img.width * ratio,
-        img.height * ratio
-      );
-
-      // Dark gradient overlay
-      const gradient = ctx.createLinearGradient(0, canvas.height * 0.4, 0, canvas.height);
-      gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
-      gradient.addColorStop(1, 'rgba(0, 0, 0, 0.9)');
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Top Glass Nav on Laptop Screen
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-      ctx.fillRect(0, 0, canvas.width, 50);
-
-      ctx.fillStyle = '#f59e0b';
-      ctx.font = 'bold 20px "Cinzel", Georgia, serif';
-      ctx.fillText('STUDIO EZÉLIA', 24, 32);
-
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-      ctx.font = '14px sans-serif';
-      ctx.fillText('« L\'art à portée de main »', canvas.width - 240, 32);
-
-      // Bottom Photo Details
-      ctx.fillStyle = '#fde68a';
-      ctx.font = '14px monospace';
-      ctx.fillText(`COLLECTION: ${photo.categoryLabel.toUpperCase()}`, 30, canvas.height - 70);
-
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 26px "Cinzel", Georgia, serif';
-      ctx.fillText(photo.title, 30, canvas.height - 35);
-
-      screenTextureRef.current.needsUpdate = true;
-    };
-  }, [currentScreenIndex, photos]);
-
-  useEffect(() => {
-    const mount = mountRef.current;
-    if (!mount) return;
-
-    const width = mount.clientWidth;
-    const height = mount.clientHeight;
-
-    // 1. Scene, Camera, Renderer
-    const scene = new THREE.Scene();
-    sceneRef.current = scene;
-
-    const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 100);
-    camera.position.set(0, 1.8, 5.2);
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    mount.appendChild(renderer.domElement);
-
-    // 2. Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
-    scene.add(ambientLight);
-
-    const goldKeyLight = new THREE.DirectionalLight(0xf59e0b, 2.5);
-    goldKeyLight.position.set(4, 5, 4);
-    goldKeyLight.castShadow = true;
-    scene.add(goldKeyLight);
-
-    const fillLight = new THREE.DirectionalLight(0x38bdf8, 1.2);
-    fillLight.position.set(-4, 3, -2);
-    scene.add(fillLight);
-
-    // 3. Laptop Screen Texture
-    const canvas = document.createElement('canvas');
-    canvas.width = 1024;
-    canvas.height = 640;
-    screenCanvasRef.current = canvas;
-
-    const screenTexture = new THREE.CanvasTexture(canvas);
-    screenTextureRef.current = screenTexture;
-
-    // 4. Build Laptop 3D Model
-    const laptopGroup = new THREE.Group();
-    laptopGroupRef.current = laptopGroup;
-    scene.add(laptopGroup);
-
-    // Materials
-    const metalMaterial = new THREE.MeshStandardMaterial({
-      color: 0x1f2128,
-      metalness: 0.85,
-      roughness: 0.25,
-    });
-
-    const darkPlasticMaterial = new THREE.MeshStandardMaterial({
-      color: 0x0f1115,
-      metalness: 0.3,
-      roughness: 0.7,
-    });
-
-    const screenMaterial = new THREE.MeshBasicMaterial({
-      map: screenTexture,
-    });
-
-    // Base Chassis
-    const baseWidth = 3.2;
-    const baseDepth = 2.1;
-    const baseHeight = 0.08;
-
-    const baseGeometry = new THREE.BoxGeometry(baseWidth, baseHeight, baseDepth);
-    const baseMesh = new THREE.Mesh(baseGeometry, metalMaterial);
-    baseMesh.position.y = -baseHeight / 2;
-    baseMesh.castShadow = true;
-    baseMesh.receiveShadow = true;
-    laptopGroup.add(baseMesh);
-
-    // Keyboard Area
-    const keyboardGeometry = new THREE.BoxGeometry(2.7, 0.02, 1.1);
-    const keyboardMesh = new THREE.Mesh(keyboardGeometry, darkPlasticMaterial);
-    keyboardMesh.position.set(0, 0.005, -0.25);
-    laptopGroup.add(keyboardMesh);
-
-    // Trackpad
-    const trackpadGeometry = new THREE.BoxGeometry(1.0, 0.01, 0.65);
-    const trackpadMaterial = new THREE.MeshStandardMaterial({
-      color: 0x272a33,
-      metalness: 0.5,
-      roughness: 0.3,
-    });
-    const trackpadMesh = new THREE.Mesh(trackpadGeometry, trackpadMaterial);
-    trackpadMesh.position.set(0, 0.005, 0.65);
-    laptopGroup.add(trackpadMesh);
-
-    // Screen Lid (Hinged at back)
-    const lidGroup = new THREE.Group();
-    lidGroup.position.set(0, 0, -baseDepth / 2);
-    // Open angle (~110 degrees)
-    lidGroup.rotation.x = -Math.PI / 2 + 0.32;
-    laptopGroup.add(lidGroup);
-
-    // Lid Frame
-    const lidHeight = 2.1;
-    const lidGeometry = new THREE.BoxGeometry(baseWidth, lidHeight, 0.05);
-    const lidMesh = new THREE.Mesh(lidGeometry, metalMaterial);
-    lidMesh.position.set(0, lidHeight / 2, -0.025);
-    lidMesh.castShadow = true;
-    lidGroup.add(lidMesh);
-
-    // Screen Display Plane
-    const screenDisplayGeometry = new THREE.PlaneGeometry(3.0, 1.9);
-    const screenDisplayMesh = new THREE.Mesh(screenDisplayGeometry, screenMaterial);
-    screenDisplayMesh.position.set(0, lidHeight / 2, 0.002);
-    lidGroup.add(screenDisplayMesh);
-
-    // Golden Royal Logo on Lid Back
-    const logoBackGeometry = new THREE.CircleGeometry(0.18, 32);
-    const logoBackMaterial = new THREE.MeshStandardMaterial({
-      color: 0xf59e0b,
-      metalness: 0.9,
-      roughness: 0.1,
-      emissive: 0x92400e,
-      emissiveIntensity: 0.3,
-    });
-    const logoBackMesh = new THREE.Mesh(logoBackGeometry, logoBackMaterial);
-    logoBackMesh.position.set(0, lidHeight / 2, -0.052);
-    logoBackMesh.rotation.y = Math.PI;
-    lidGroup.add(logoBackMesh);
-
-    // Ground Shadow Plate
-    const shadowGeo = new THREE.PlaneGeometry(6, 6);
-    const shadowMat = new THREE.ShadowMaterial({ opacity: 0.4 });
-    const shadowMesh = new THREE.Mesh(shadowGeo, shadowMat);
-    shadowMesh.rotation.x = -Math.PI / 2;
-    shadowMesh.position.y = -0.6;
-    shadowMesh.receiveShadow = true;
-    scene.add(shadowMesh);
-
-    // Mouse Parallax & Drag Handling
-    let mouseX = 0;
-    let mouseY = 0;
-    let targetRotationY = 0;
-    let targetRotationX = 0;
-    let isDragging = false;
-    let prevMouseX = 0;
-    let prevMouseY = 0;
-
-    const handleMouseMove = (e) => {
-      const rect = mount.getBoundingClientRect();
-      const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-      const y = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
-
-      if (isDragging) {
-        const deltaX = e.clientX - prevMouseX;
-        const deltaY = e.clientY - prevMouseY;
-        targetRotationY += deltaX * 0.01;
-        targetRotationX += deltaY * 0.01;
-        prevMouseX = e.clientX;
-        prevMouseY = e.clientY;
-      } else {
-        mouseX = x;
-        mouseY = y;
+      const openAction = animationsObject.actions['Open'];
+      if (openAction) {
+        openAction.reset();
+        openAction.setLoop(LoopOnce, 1);
+        openAction.clampWhenFinished = true;
+        openAction.play();
       }
-    };
+    } else {
+      const openAction = animationsObject.actions['Open'];
+      if (openAction) openAction.stop();
 
-    const handleMouseDown = (e) => {
-      isDragging = true;
-      prevMouseX = e.clientX;
-      prevMouseY = e.clientY;
-    };
-
-    const handleMouseUp = () => {
-      isDragging = false;
-    };
-
-    mount.addEventListener('mousemove', handleMouseMove);
-    mount.addEventListener('mousedown', handleMouseDown);
-    window.addEventListener('mouseup', handleMouseUp);
-
-    // Animation Loop
-    let clock = new THREE.Clock();
-    let animationFrameId;
-
-    const animate = () => {
-      animationFrameId = requestAnimationFrame(animate);
-      const elapsedTime = clock.getElapsedTime();
-
-      // Gentle floating levitation
-      laptopGroup.position.y = Math.sin(elapsedTime * 1.5) * 0.08 - 0.1;
-
-      // Smooth rotation towards mouse
-      if (!isDragging) {
-        targetRotationY = mouseX * 0.45;
-        targetRotationX = -mouseY * 0.25;
+      const closeAction = animationsObject.actions['Close'];
+      if (closeAction) {
+        closeAction.reset();
+        closeAction.setLoop(LoopOnce, 1);
+        closeAction.clampWhenFinished = true;
+        closeAction.setDuration(1.6);
+        closeAction.play();
       }
-
-      laptopGroup.rotation.y += (targetRotationY - laptopGroup.rotation.y) * 0.08;
-      laptopGroup.rotation.x += (targetRotationX - laptopGroup.rotation.x) * 0.08;
-
-      renderer.render(scene, camera);
-    };
-
-    animate();
-
-    // Resize Handler
-    const handleResize = () => {
-      if (!mount) return;
-      const newWidth = mount.clientWidth;
-      const newHeight = mount.clientHeight;
-      camera.aspect = newWidth / newHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(newWidth, newHeight);
-    };
-
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      cancelAnimationFrame(animationFrameId);
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('mouseup', handleMouseUp);
-      if (mount) {
-        mount.removeEventListener('mousemove', handleMouseMove);
-        mount.removeEventListener('mousedown', handleMouseDown);
-        if (renderer.domElement && mount.contains(renderer.domElement)) {
-          mount.removeChild(renderer.domElement);
-        }
-      }
-      renderer.dispose();
-    };
-  }, []);
+    }
+  }, [isOpen, animationsObject?.actions]);
 
   return (
-    <section id="laptop-3d-experience" className="relative w-full py-24 px-6 bg-gradient-to-b from-neutral-950 via-black to-neutral-950 text-white overflow-hidden select-none">
-      {/* Background Lighting */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-amber-500/10 blur-[150px] pointer-events-none rounded-full" />
+    <>
+      <Env />
+      <ambientLight intensity={0.7} />
+      <directionalLight position={[5, 10, 5]} intensity={1.2} castShadow />
+
+      <PresentationControls
+        global={false}
+        cursor={true}
+        polar={[-0.2, 0.25]}
+        azimuth={[-0.7, 0.7]}
+        config={{ mass: 2, tension: 350 }}
+        snap={{ mass: 4, tension: 350 }}
+      >
+        <group ref={groupRef} position={[0, -0.2, 0]} scale={[1, 1, 1]}>
+          <LenovoBook
+            nodes={nodes}
+            materials={materials}
+            refName={lenovoBookRef}
+          />
+          <RectLight lightRef={lightRef} intensity={isPoweredOn && isOpen ? 2.8 : 0} />
+          <StudioScreen
+            isOpen={isOpen}
+            isPoweredOn={isPoweredOn}
+            isFinishedBooting={isFinishedBooting}
+            bootScreenRef={bootScreenRef}
+            screenRef={screenRef}
+          />
+        </group>
+      </PresentationControls>
+
+      <ContactShadows
+        position={[0, -0.65, 0]}
+        opacity={0.45}
+        scale={8}
+        blur={1.4}
+        color="#000000"
+      />
+    </>
+  );
+}
+
+// Preload 3D Model
+useGLTF.preload('/models/lenovo-notebook.glb');
+
+const Laptop3D = () => {
+  const lightRef = useRef();
+  const bootScreenRef = useRef();
+  const screenRef = useRef();
+
+  // Audio effects
+  const [bootAudio] = useState(() => new Audio('/sounds/beep.wav'));
+  const [fanAudio] = useState(() => new Audio('/sounds/fan.mp3'));
+  const [soundEnabled, setSoundEnabled] = useState(true);
+
+  // Zustand Store
+  const isOpen = useNotebook((state) => state.isOpen);
+  const isPoweredOn = useNotebook((state) => state.isPoweredOn);
+  const isFinishedBooting = useNotebook((state) => state.isFinishedBooting);
+  const openLid = useNotebook((state) => state.open);
+  const closeLid = useNotebook((state) => state.close);
+  const powerOn = useNotebook((state) => state.powerOn);
+  const powerOff = useNotebook((state) => state.powerOff);
+  const finishBooting = useNotebook((state) => state.finishBooting);
+
+  // Sound playback helper
+  const playSound = (audio) => {
+    if (!soundEnabled) return;
+    try {
+      audio.currentTime = 0;
+      audio.play().catch(() => {});
+    } catch (e) {}
+  };
+
+  // Toggle Lid Open/Close
+  const handleToggleLid = () => {
+    if (isOpen) {
+      closeLid();
+    } else {
+      openLid();
+    }
+  };
+
+  // Toggle Power On/Off
+  const handleTogglePower = () => {
+    if (isPoweredOn) {
+      powerOff();
+      if (lightRef.current) {
+        gsap.to(lightRef.current, { intensity: 0, duration: 0.5 });
+      }
+    } else {
+      playSound(bootAudio);
+      playSound(fanAudio);
+      powerOn();
+
+      // Simulate system boot sequence then show Studio OS
+      setTimeout(() => {
+        finishBooting();
+        if (lightRef.current) {
+          gsap.to(lightRef.current, { intensity: 2.8, duration: 1 });
+        }
+      }, 3500);
+    }
+  };
+
+  // Reboot sequence
+  const handleReboot = () => {
+    playSound(bootAudio);
+    playSound(fanAudio);
+    powerOff();
+    setTimeout(() => {
+      powerOn();
+      setTimeout(() => {
+        finishBooting();
+      }, 3500);
+    }, 400);
+  };
+
+  return (
+    <section id="laptop-3d" className="relative w-full min-h-screen bg-neutral-950 text-white overflow-hidden pt-24 pb-16 flex flex-col justify-between select-none">
+      {/* Background Ambience */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-amber-500/10 blur-[150px] pointer-events-none rounded-full" />
+      <div className="absolute inset-0 bg-radial from-transparent via-black/40 to-neutral-950 pointer-events-none" />
 
       {/* Section Header */}
-      <div className="max-w-4xl mx-auto text-center mb-6">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-400/30 text-amber-300 text-xs font-mono uppercase tracking-wider mb-3">
+      <div className="relative z-10 max-w-5xl mx-auto px-6 text-center mb-8">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-amber-400/30 text-amber-300 text-xs font-mono uppercase tracking-widest shadow-xl mb-4">
           <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-          <span>Expérience 3D Interactive — Comme sur r3f-portfolio</span>
+          <span>Projet 3D R3F Intégré • lenovo-notebook.glb</span>
         </div>
 
-        <h2 className="font-serif text-3xl sm:text-5xl font-bold tracking-tight text-white">
-          Le Studio sur Votre <span className="bg-gradient-to-r from-amber-300 via-amber-400 to-amber-600 bg-clip-text text-transparent">Écran</span>
+        <h2 className="font-serif text-3xl sm:text-5xl md:text-6xl font-extrabold text-white mb-3">
+          Le Studio <span className="bg-gradient-to-r from-amber-200 via-amber-400 to-amber-600 bg-clip-text text-transparent">Connecté</span>
         </h2>
 
-        <p className="text-sm sm:text-base text-white/60 font-light mt-2 max-w-lg mx-auto">
-          Faites pivoter l'ordinateur 3D à la souris. L'écran diffuse en continu les créations du Studio Ezélia.
+        <p className="text-base sm:text-lg text-amber-100/90 font-light italic max-w-xl mx-auto">
+          « L'art à portée de main » — Manipulez le modèle 3D et explorez le portfolio en direct sur l'écran.
         </p>
       </div>
 
-      {/* 3D Canvas Mount */}
-      <div className="relative max-w-4xl h-[460px] sm:h-[540px] mx-auto cursor-grab active:cursor-grabbing">
-        <div ref={mountRef} className="w-full h-full" />
+      {/* Interactive Controls Bar */}
+      <div className="relative z-20 max-w-3xl mx-auto px-6 flex flex-wrap items-center justify-center gap-3 mb-4">
+        {/* Open / Close Lid */}
+        <button
+          onClick={handleToggleLid}
+          className={`px-4 py-2 rounded-xl border text-xs font-mono uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer shadow-lg ${
+            isOpen
+              ? 'bg-amber-500/15 border-amber-400/50 text-amber-300 hover:bg-amber-500/25'
+              : 'bg-white/5 border-white/20 text-white hover:bg-white/10'
+          }`}
+        >
+          <Laptop className="w-4 h-4 text-amber-400" />
+          <span>{isOpen ? 'Fermer le clapet' : 'Ouvrir le clapet'}</span>
+        </button>
 
-        {/* Floating Screen Controls */}
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-3 bg-black/60 backdrop-blur-xl border border-white/15 px-4 py-2 rounded-full shadow-2xl">
-          <button
-            onClick={() => setCurrentScreenIndex((prev) => (prev + 1) % photos.length)}
-            className="flex items-center gap-1.5 text-xs text-amber-300 hover:text-white transition-colors cursor-pointer font-mono"
-          >
-            <Monitor className="w-3.5 h-3.5" />
-            <span>Changer d'image sur l'écran</span>
-          </button>
-          <span className="text-white/20">|</span>
-          <span className="text-[11px] text-white/50 font-mono">
-            Glissez pour tourner à 360°
-          </span>
-        </div>
+        {/* Power On / Off */}
+        <button
+          onClick={handleTogglePower}
+          className={`px-4 py-2 rounded-xl border text-xs font-mono uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer shadow-lg ${
+            isPoweredOn
+              ? 'bg-emerald-500/15 border-emerald-400/50 text-emerald-300 hover:bg-emerald-500/25'
+              : 'bg-red-500/15 border-red-400/50 text-red-300 hover:bg-red-500/25'
+          }`}
+        >
+          <Power className="w-4 h-4" />
+          <span>{isPoweredOn ? 'Éteindre' : 'Allumer'}</span>
+        </button>
+
+        {/* Reboot */}
+        <button
+          onClick={handleReboot}
+          className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 text-white/80 hover:text-white text-xs font-mono uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer shadow-lg"
+        >
+          <RotateCw className="w-4 h-4 text-amber-400" />
+          <span>Redémarrer OS</span>
+        </button>
+
+        {/* Sound Toggle */}
+        <button
+          onClick={() => setSoundEnabled(!soundEnabled)}
+          className="px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 text-white/70 hover:text-amber-300 text-xs font-mono flex items-center gap-1.5 transition-all cursor-pointer shadow-lg"
+        >
+          {soundEnabled ? (
+            <>
+              <Volume2 className="w-4 h-4 text-amber-400" />
+              <span>Sons Activés</span>
+            </>
+          ) : (
+            <>
+              <VolumeX className="w-4 h-4 text-neutral-400" />
+              <span>Muet</span>
+            </>
+          )}
+        </button>
       </div>
 
-      {/* Final Landing CTA & Contact (On s'arrête là) */}
-      <div className="max-w-3xl mx-auto mt-16 text-center border-t border-white/10 pt-12">
-        <h3 className="font-serif text-2xl sm:text-3xl font-bold text-white mb-2">
-          Donnez Vie à Vos Plus Beaux Souvenirs
-        </h3>
-        <p className="text-amber-200/80 italic text-base sm:text-lg font-light mb-6">
-          « L'art à portée de main »
-        </p>
-        <p className="text-xs sm:text-sm text-white/60 font-light max-w-md mx-auto mb-8 leading-relaxed">
-          Que ce soit pour célébrer votre alliance royale, une cérémonie civile ou un portrait d'art, confiez votre journée à Studio Ezélia.
-        </p>
+      {/* Mouse Drag Hint */}
+      <div className="relative z-10 flex items-center justify-center gap-2 text-xs font-mono text-white/50 mb-2">
+        <MousePointer className="w-3.5 h-3.5 text-amber-400 animate-bounce" />
+        <span>Cliquez et glissez la souris pour faire pivoter l'ordinateur en 3D</span>
+      </div>
 
-        <div className="inline-flex flex-wrap items-center justify-center gap-4">
-          <a
-            href="https://wa.me/"
-            target="_blank"
-            rel="noreferrer"
-            className="px-6 py-3 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-neutral-950 font-bold text-xs uppercase tracking-wider transition-all shadow-xl shadow-amber-500/20 flex items-center gap-2 cursor-pointer"
+      {/* 3D Canvas Stage */}
+      <div className="relative w-full h-[620px] sm:h-[680px] max-w-6xl mx-auto px-4">
+        <Suspense
+          fallback={
+            <div className="w-full h-full flex flex-col items-center justify-center text-amber-300 font-mono text-sm">
+              <div className="w-12 h-12 border-2 border-amber-400 border-t-transparent rounded-full animate-spin mb-4" />
+              <span>Chargement du modèle 3D lenovo-notebook.glb...</span>
+            </div>
+          }
+        >
+          <Canvas
+            camera={{
+              fov: 42,
+              near: 0.1,
+              far: 100,
+              position: [0, 1.3, 5.2],
+            }}
+            shadows
+            className="cursor-grab active:cursor-grabbing"
           >
-            <Phone className="w-4 h-4" />
-            <span>Réserver un Shooting (WhatsApp)</span>
-          </a>
+            <LaptopScene
+              lightRef={lightRef}
+              bootScreenRef={bootScreenRef}
+              screenRef={screenRef}
+            />
+          </Canvas>
+        </Suspense>
+      </div>
 
-          <div className="flex items-center gap-2 px-5 py-3 rounded-full bg-white/5 border border-white/10 text-white/70 text-xs font-mono">
-            <Mail className="w-4 h-4 text-amber-400" />
-            <span>contact@studio-ezelia.com</span>
+      {/* VIP Booking & Studio Contact Card */}
+      <div className="relative z-20 max-w-4xl mx-auto px-6 mt-12 mb-16">
+        <div className="rounded-3xl bg-gradient-to-br from-white/10 via-white/5 to-transparent border border-amber-500/30 p-8 sm:p-10 backdrop-blur-xl shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+
+          <div className="flex flex-col md:flex-row items-center justify-between gap-8 relative z-10">
+            <div>
+              <div className="flex items-center gap-2 text-amber-400 text-xs font-mono uppercase tracking-widest mb-2">
+                <ShieldCheck className="w-4 h-4" />
+                <span>Réservations VIP Saison 2026</span>
+              </div>
+              <h3 className="font-serif text-2xl sm:text-4xl font-bold text-white mb-2">
+                Sublimez Votre Grand Jour
+              </h3>
+              <p className="text-neutral-300 text-sm max-w-md leading-relaxed">
+                Mariages d'exception, portraits impériaux et célébrations prestigieuses. Un accompagnement sur mesure pour immortaliser vos plus précieux instants.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+              <a
+                href="https://wa.me/2250700000000"
+                target="_blank"
+                rel="noreferrer"
+                className="w-full sm:w-auto px-7 py-4 rounded-full bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 hover:from-amber-400 hover:to-amber-600 text-neutral-950 font-bold text-sm tracking-wider uppercase transition-all shadow-xl shadow-amber-500/25 flex items-center justify-center gap-2 cursor-pointer hover:scale-105"
+              >
+                <Calendar className="w-4 h-4" />
+                <span>Réserver une Séance</span>
+              </a>
+
+              <a
+                href="tel:+2250700000000"
+                className="w-full sm:w-auto px-6 py-4 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-mono flex items-center justify-center gap-2 transition-all cursor-pointer"
+              >
+                <Phone className="w-4 h-4 text-amber-400" />
+                <span>+225 07 00 00 00 00</span>
+              </a>
+            </div>
           </div>
         </div>
-
-        <div className="mt-12 text-[11px] font-mono text-white/30">
-          STUDIO EZÉLIA · TOUS DROITS RÉSERVÉS · {new Date().getFullYear()}
-        </div>
       </div>
+
+      {/* Website Footer */}
+      <Footer />
     </section>
   );
 };
