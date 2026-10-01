@@ -8,6 +8,10 @@ dist/
 build/
 .vite/
 
+# Root media duplicates (already in public/)
+/hero.mp4
+WhatsApp Image*.jpeg
+
 # Environment files
 .env
 .env.local

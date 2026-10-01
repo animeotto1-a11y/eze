@@ -1,75 +1,94 @@
-import React from 'react'
+import React from 'react';
+import { Maximize2, Camera, Sparkles } from 'lucide-react';
 
-const Card = (props) => {
-  const { elem, isCenter, totalItems, currentIndex } = props;
+const Card = ({ photo, isCenter, totalItems, currentIndex, onExpand }) => {
+  const handleCardClick = (e) => {
+    if (isCenter) {
+      e.stopPropagation();
+      onExpand(photo);
+    }
+  };
 
   return (
     <div
-      className={`relative rounded-3xl overflow-hidden border transition-all duration-500 bg-neutral-900/80 backdrop-blur-xl ${
+      onClick={handleCardClick}
+      className={`relative rounded-3xl overflow-hidden border transition-all duration-500 bg-neutral-950/90 backdrop-blur-xl group select-none ${
         isCenter
-          ? 'w-[320px] sm:w-[360px] h-[480px] border-white/30 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)]'
-          : 'w-[260px] sm:w-[280px] h-[390px] border-white/10 opacity-75'
+          ? 'w-[320px] sm:w-[380px] h-[490px] sm:h-[530px] border-amber-400/40 shadow-[0_30px_70px_-15px_rgba(217,119,6,0.35)] ring-1 ring-amber-400/20'
+          : 'w-[260px] sm:w-[290px] h-[400px] sm:h-[430px] border-white/10 opacity-75 hover:opacity-90'
       }`}
     >
-      <a href={elem.url} target="_blank" rel="noreferrer" className="block h-full w-full relative group">
-        
-        {/* Expand / Option buttons (Center Card only) */}
+      <div className="relative w-full h-full">
+
+        {/* Top Floating Controls (Center Card only) */}
         {isCenter && (
           <div className="absolute top-4 left-0 right-0 px-4 flex justify-between items-center z-20">
-            <span className="bg-black/40 backdrop-blur-md border border-white/20 text-[11px] px-3 py-1 rounded-full flex items-center gap-1.5 text-white/80">
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-              </svg>
-              Expand
-            </span>
-            <span className="w-7 h-7 bg-black/40 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-xs text-white/80">
-              •••
+            {/* Real functional Expand button */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onExpand(photo);
+              }}
+              title="Agrandir en plein écran (Espace)"
+              className="bg-black/60 hover:bg-amber-500 hover:text-black backdrop-blur-md border border-amber-400/30 text-amber-300 text-[11px] font-medium px-3 py-1.5 rounded-full flex items-center gap-1.5 transition-all shadow-lg cursor-pointer"
+            >
+              <Maximize2 className="w-3.5 h-3.5" />
+              <span>Agrandir</span>
+            </button>
+
+            {/* Category Pill */}
+            <span className="bg-black/60 backdrop-blur-md border border-white/20 text-white/90 text-[10px] font-mono tracking-wider uppercase px-2.5 py-1 rounded-full flex items-center gap-1">
+              <Sparkles className="w-3 h-3 text-amber-400" />
+              {photo.categoryLabel}
             </span>
           </div>
         )}
 
-        {/* Dynamic API Image */}
+        {/* Real User Photo */}
         <img
           className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-          src={elem.download_url}
-          alt={elem.author}
+          src={photo.src}
+          alt={photo.title}
           loading="lazy"
         />
 
         {/* Gradient dark overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/30 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent pointer-events-none" />
 
         {/* Card Details */}
-        <div className="absolute bottom-0 left-0 right-0 p-6 text-left">
-          
-          <div className="flex justify-between items-end mb-1">
-            <h2 className={`font-bold text-white truncate ${isCenter ? 'text-2xl' : 'text-lg'}`}>
-              {elem.author}
+        <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6 text-left pointer-events-none">
+          <div className="flex justify-between items-end mb-1.5">
+            <h2 className={`font-serif font-bold text-white tracking-wide truncate ${isCenter ? 'text-xl sm:text-2xl' : 'text-base sm:text-lg'}`}>
+              {photo.title}
             </h2>
             {isCenter && (
-              <span className="text-xs text-white/50 font-mono mb-1">
-                {currentIndex}/{totalItems}
+              <span className="text-[11px] text-amber-300/80 font-mono mb-1 shrink-0 ml-2">
+                {currentIndex} / {totalItems}
               </span>
             )}
           </div>
 
-          <p className="text-xs text-white/60 line-clamp-2 leading-relaxed font-light mb-3">
-            High quality shot captured by {elem.author}. Dimensions available at {elem.width} × {elem.height} pixels.
+          <p className="text-xs text-white/70 line-clamp-2 leading-relaxed font-light mb-3">
+            {photo.description}
           </p>
 
-          <div className="flex items-center text-[11px] text-green-400 font-mono gap-1">
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            <span>Picsum ID: {elem.id}</span>
+          {/* Technical Shooting Details */}
+          <div className="flex items-center justify-between text-[11px] font-mono border-t border-white/10 pt-2.5">
+            <div className="flex items-center gap-1.5 text-amber-300/90 truncate">
+              <Camera className="w-3.5 h-3.5 shrink-0 text-amber-400" />
+              <span className="truncate">{photo.camera}</span>
+            </div>
+            {isCenter && (
+              <span className="text-white/40 text-[10px] shrink-0 ml-2 hidden sm:inline">
+                {photo.settings}
+              </span>
+            )}
           </div>
-
         </div>
 
-      </a>
+      </div>
     </div>
-  )
-}
+  );
+};
 
-export default Card
+export default Card;
