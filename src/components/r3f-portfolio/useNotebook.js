@@ -1,10 +1,13 @@
 import { create } from 'zustand';
 
 export const useNotebook = create((set) => ({
-  isOpen: true,
-  isPoweredOn: true,
-  isFinishedBooting: true,
+  isOpen: false,
+  isPoweredOn: false,
+  isFinishedBooting: false,
+  isNewVisit: true,
   loadedPage: 'gallery',
+
+  changeVisitStatus: () => set({ isNewVisit: false }),
   open: () => set({ isOpen: true }),
   close: () => set({ isOpen: false }),
   powerOn: () => set({ isPoweredOn: true }),

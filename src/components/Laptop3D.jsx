@@ -1,7 +1,6 @@
 import React, { useRef, useState, useEffect, Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { PresentationControls, ContactShadows, useGLTF, useAnimations } from '@react-three/drei';
-import { LoopOnce } from 'three';
 import gsap from 'gsap';
 import {
   Laptop,
@@ -12,20 +11,34 @@ import {
   VolumeX,
   Phone,
   Calendar,
-  Layers,
-  ArrowUpRight,
   ShieldCheck,
-  MousePointer
+  MousePointer,
+  Hand
 } from 'lucide-react';
 import LenovoBook from './r3f-portfolio/LenovoBook';
 import Env from './r3f-portfolio/Env';
 import RectLight from './r3f-portfolio/RectLight';
 import StudioScreen from './r3f-portfolio/StudioScreen';
+import HingeButtons from './r3f-portfolio/HingeButtons';
+import PowerButtons from './r3f-portfolio/PowerButtons';
+import Captions from './r3f-portfolio/Captions';
 import useNotebook from './r3f-portfolio/useNotebook';
 import Footer from './Footer';
 
-// Inner 3D Laptop Scene leveraging lenovo-notebook.glb and GLTF animations
-function LaptopScene({ lightRef, bootScreenRef, screenRef }) {
+// Inner 3D Laptop Scene leveraging lenovo-notebook.glb, exact side hinge button, and power button
+function LaptopScene({
+  lightRef,
+  bootScreenRef,
+  screenRef,
+  openButtonRef,
+  closeButtonRef,
+  powerOnButtonRef,
+  powerOffButtonRef,
+  bootAudio,
+  turnComputerFansOn,
+  turnComputerFansOff,
+  soundEnabled,
+}) {
   const { nodes, materials, animations } = useGLTF('/models/lenovo-notebook.glb');
   const groupRef = useRef();
   const lenovoBookRef = useRef();
@@ -33,50 +46,26 @@ function LaptopScene({ lightRef, bootScreenRef, screenRef }) {
   const isOpen = useNotebook((state) => state.isOpen);
   const isPoweredOn = useNotebook((state) => state.isPoweredOn);
   const isFinishedBooting = useNotebook((state) => state.isFinishedBooting);
+  const open = useNotebook((state) => state.open);
+  const close = useNotebook((state) => state.close);
+  const powerOn = useNotebook((state) => state.powerOn);
+  const powerOff = useNotebook((state) => state.powerOff);
+  const finishBooting = useNotebook((state) => state.finishBooting);
 
   const animationsObject = useAnimations(animations, groupRef);
 
-  // Initialize laptop in open state on first render
-  useEffect(() => {
-    if (animationsObject?.actions?.['Open']) {
-      const openAction = animationsObject.actions['Open'];
-      openAction.setLoop(LoopOnce, 1);
-      openAction.clampWhenFinished = true;
-      openAction.play();
-      // Jump to end of Open animation
-      openAction.time = openAction.getClip().duration;
+  // Screen light helpers
+  const screenLightOn = (ref) => {
+    if (ref?.current) {
+      gsap.to(ref.current, { intensity: 3, duration: 1 });
     }
-  }, [animationsObject?.actions]);
+  };
 
-  // Synchronize 3D opening & closing animation when Zustand isOpen state changes
-  useEffect(() => {
-    if (!animationsObject?.actions) return;
-
-    if (isOpen) {
-      const closeAction = animationsObject.actions['Close'];
-      if (closeAction) closeAction.stop();
-
-      const openAction = animationsObject.actions['Open'];
-      if (openAction) {
-        openAction.reset();
-        openAction.setLoop(LoopOnce, 1);
-        openAction.clampWhenFinished = true;
-        openAction.play();
-      }
-    } else {
-      const openAction = animationsObject.actions['Open'];
-      if (openAction) openAction.stop();
-
-      const closeAction = animationsObject.actions['Close'];
-      if (closeAction) {
-        closeAction.reset();
-        closeAction.setLoop(LoopOnce, 1);
-        closeAction.clampWhenFinished = true;
-        closeAction.setDuration(1.6);
-        closeAction.play();
-      }
+  const screenLightOff = (ref) => {
+    if (ref?.current) {
+      gsap.to(ref.current, { intensity: 0, duration: 0.8 });
     }
-  }, [isOpen, animationsObject?.actions]);
+  };
 
   return (
     <>
@@ -93,18 +82,66 @@ function LaptopScene({ lightRef, bootScreenRef, screenRef }) {
         snap={{ mass: 4, tension: 350 }}
       >
         <group ref={groupRef} position={[0, -0.2, 0]} scale={[1, 1, 1]}>
+          {/* Authentic 3D Lenovo Mesh from r3f-portfolio */}
           <LenovoBook
             nodes={nodes}
             materials={materials}
             refName={lenovoBookRef}
           />
+
+          {/* Screen Light illuminating the keyboard */}
           <RectLight lightRef={lightRef} intensity={isPoweredOn && isOpen ? 2.8 : 0} />
+
+          {/* Side Hinge Button to Open / Close the Laptop with GSAP & GLTF Animation */}
+          <HingeButtons
+            animationsObject={animationsObject}
+            isOpen={isOpen}
+            open={open}
+            close={close}
+            openButtonRef={openButtonRef}
+            closeButtonRef={closeButtonRef}
+            powerOnButtonRef={powerOnButtonRef}
+            powerOffButtonRef={powerOffButtonRef}
+            screenLightOn={screenLightOn}
+            screenLightOff={screenLightOff}
+            lightRef={lightRef}
+            isPoweredOn={isPoweredOn}
+            isFinishedBooting={isFinishedBooting}
+            screenRef={screenRef}
+          />
+
+          {/* Keyboard Power Button with Sound & Boot Animation */}
+          <PowerButtons
+            bootAudio={bootAudio}
+            turnComputerFansOn={turnComputerFansOn}
+            turnComputerFansOff={turnComputerFansOff}
+            powerOn={powerOn}
+            powerOff={powerOff}
+            finishBooting={finishBooting}
+            powerOnButtonRef={powerOnButtonRef}
+            powerOffButtonRef={powerOffButtonRef}
+            closeButtonRef={closeButtonRef}
+            screenLightOn={screenLightOn}
+            screenLightOff={screenLightOff}
+            lightRef={lightRef}
+            screenRef={screenRef}
+            soundEnabled={soundEnabled}
+          />
+
+          {/* Studio Ezélia Live Interactive Display inside the Laptop */}
           <StudioScreen
             isOpen={isOpen}
             isPoweredOn={isPoweredOn}
             isFinishedBooting={isFinishedBooting}
             bootScreenRef={bootScreenRef}
             screenRef={screenRef}
+          />
+
+          {/* Floating 3D Guided Captions in Space */}
+          <Captions
+            isOpen={isOpen}
+            isPoweredOn={isPoweredOn}
+            isFinishedBooting={isFinishedBooting}
           />
         </group>
       </PresentationControls>
@@ -128,72 +165,82 @@ const Laptop3D = () => {
   const bootScreenRef = useRef();
   const screenRef = useRef();
 
-  // Audio effects
+  // 3D Button Refs
+  const openButtonRef = useRef();
+  const closeButtonRef = useRef();
+  const powerOnButtonRef = useRef();
+  const powerOffButtonRef = useRef();
+
+  // Sounds
   const [bootAudio] = useState(() => new Audio('/sounds/beep.wav'));
   const [fanAudio] = useState(() => new Audio('/sounds/fan.mp3'));
   const [soundEnabled, setSoundEnabled] = useState(true);
 
-  // Zustand Store
+  // Zustand State
   const isOpen = useNotebook((state) => state.isOpen);
   const isPoweredOn = useNotebook((state) => state.isPoweredOn);
   const isFinishedBooting = useNotebook((state) => state.isFinishedBooting);
-  const openLid = useNotebook((state) => state.open);
-  const closeLid = useNotebook((state) => state.close);
-  const powerOn = useNotebook((state) => state.powerOn);
-  const powerOff = useNotebook((state) => state.powerOff);
-  const finishBooting = useNotebook((state) => state.finishBooting);
 
-  // Sound playback helper
-  const playSound = (audio) => {
+  // Fan audio management
+  const turnComputerFansOn = () => {
     if (!soundEnabled) return;
     try {
-      audio.currentTime = 0;
-      audio.play().catch(() => {});
+      fanAudio.volume = 0;
+      fanAudio.play().catch(() => {});
+      const targetVolume = 0.2;
+      const fadeDuration = 3000;
+      const fadeInInterval = 100;
+      let currentTime = 0;
+      const interval = setInterval(() => {
+        currentTime += fadeInInterval;
+        fanAudio.volume = Math.min((currentTime / fadeDuration) * targetVolume, targetVolume);
+        if (currentTime >= fadeDuration || fanAudio.volume === targetVolume) {
+          clearInterval(interval);
+        }
+      }, fadeInInterval);
+    } catch (e) {}
+
+    setTimeout(() => {
+      turnComputerFansOff();
+    }, 9000);
+  };
+
+  const turnComputerFansOff = () => {
+    try {
+      const fadeOutInterval = 50;
+      const fadeSteps = 30;
+      const initialVolume = fanAudio.volume;
+      let currentStep = 0;
+      const volumeDecrement = initialVolume / fadeSteps;
+      const interval = setInterval(() => {
+        currentStep++;
+        const nextVolume = initialVolume - currentStep * volumeDecrement;
+        fanAudio.volume = Math.max(nextVolume, 0);
+        if (currentStep >= fadeSteps || fanAudio.volume === 0) {
+          clearInterval(interval);
+          fanAudio.pause();
+          fanAudio.volume = initialVolume;
+        }
+      }, fadeOutInterval);
     } catch (e) {}
   };
 
-  // Toggle Lid Open/Close
-  const handleToggleLid = () => {
+  // External trigger for side open/close button
+  const triggerHingeClick = () => {
     if (isOpen) {
-      closeLid();
+      if (closeButtonRef.current) closeButtonRef.current.click();
     } else {
-      openLid();
+      if (openButtonRef.current) openButtonRef.current.click();
     }
   };
 
-  // Toggle Power On/Off
-  const handleTogglePower = () => {
+  // External trigger for keyboard power button
+  const triggerPowerClick = () => {
     if (isPoweredOn) {
-      powerOff();
-      if (lightRef.current) {
-        gsap.to(lightRef.current, { intensity: 0, duration: 0.5 });
-      }
+      if (powerOffButtonRef.current) powerOffButtonRef.current.click();
     } else {
-      playSound(bootAudio);
-      playSound(fanAudio);
-      powerOn();
-
-      // Simulate system boot sequence then show Studio OS
-      setTimeout(() => {
-        finishBooting();
-        if (lightRef.current) {
-          gsap.to(lightRef.current, { intensity: 2.8, duration: 1 });
-        }
-      }, 3500);
+      if (powerOnButtonRef.current) powerOnButtonRef.current.click();
     }
-  };
-
-  // Reboot sequence
-  const handleReboot = () => {
-    playSound(bootAudio);
-    playSound(fanAudio);
-    powerOff();
-    setTimeout(() => {
-      powerOn();
-      setTimeout(() => {
-        finishBooting();
-      }, 3500);
-    }, 400);
   };
 
   return (
@@ -203,26 +250,26 @@ const Laptop3D = () => {
       <div className="absolute inset-0 bg-radial from-transparent via-black/40 to-neutral-950 pointer-events-none" />
 
       {/* Section Header */}
-      <div className="relative z-10 max-w-5xl mx-auto px-6 text-center mb-8">
+      <div className="relative z-10 max-w-5xl mx-auto px-6 text-center mb-6">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-amber-400/30 text-amber-300 text-xs font-mono uppercase tracking-widest shadow-xl mb-4">
           <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-          <span>Projet 3D R3F Intégré • lenovo-notebook.glb</span>
+          <span>Projet R3F Officiel • Animations Natives GLTF</span>
         </div>
 
         <h2 className="font-serif text-3xl sm:text-5xl md:text-6xl font-extrabold text-white mb-3">
-          Le Studio <span className="bg-gradient-to-r from-amber-200 via-amber-400 to-amber-600 bg-clip-text text-transparent">Connecté</span>
+          L'Ordinateur <span className="bg-gradient-to-r from-amber-200 via-amber-400 to-amber-600 bg-clip-text text-transparent">Interactif 3D</span>
         </h2>
 
         <p className="text-base sm:text-lg text-amber-100/90 font-light italic max-w-xl mx-auto">
-          « L'art à portée de main » — Manipulez le modèle 3D et explorez le portfolio en direct sur l'écran.
+          « L'art à portée de main » — Cliquez sur le bouton latéral pour ouvrir le PC, allumez le clavier et interagissez en 3D.
         </p>
       </div>
 
-      {/* Interactive Controls Bar */}
-      <div className="relative z-20 max-w-3xl mx-auto px-6 flex flex-wrap items-center justify-center gap-3 mb-4">
-        {/* Open / Close Lid */}
+      {/* Interactive Controls & Status Bar */}
+      <div className="relative z-20 max-w-4xl mx-auto px-6 flex flex-wrap items-center justify-center gap-3 mb-2">
+        {/* Status Clapet */}
         <button
-          onClick={handleToggleLid}
+          onClick={triggerHingeClick}
           className={`px-4 py-2 rounded-xl border text-xs font-mono uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer shadow-lg ${
             isOpen
               ? 'bg-amber-500/15 border-amber-400/50 text-amber-300 hover:bg-amber-500/25'
@@ -230,32 +277,26 @@ const Laptop3D = () => {
           }`}
         >
           <Laptop className="w-4 h-4 text-amber-400" />
-          <span>{isOpen ? 'Fermer le clapet' : 'Ouvrir le clapet'}</span>
+          <span>{isOpen ? 'Fermer le Clapet 3D' : 'Ouvrir le Clapet 3D'}</span>
         </button>
 
-        {/* Power On / Off */}
+        {/* Status Power */}
         <button
-          onClick={handleTogglePower}
-          className={`px-4 py-2 rounded-xl border text-xs font-mono uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer shadow-lg ${
-            isPoweredOn
-              ? 'bg-emerald-500/15 border-emerald-400/50 text-emerald-300 hover:bg-emerald-500/25'
-              : 'bg-red-500/15 border-red-400/50 text-red-300 hover:bg-red-500/25'
+          onClick={triggerPowerClick}
+          disabled={!isOpen}
+          className={`px-4 py-2 rounded-xl border text-xs font-mono uppercase tracking-wider flex items-center gap-2 transition-all shadow-lg ${
+            !isOpen
+              ? 'opacity-40 cursor-not-allowed bg-white/5 border-white/10 text-neutral-400'
+              : isPoweredOn
+              ? 'cursor-pointer bg-emerald-500/15 border-emerald-400/50 text-emerald-300 hover:bg-emerald-500/25'
+              : 'cursor-pointer bg-red-500/15 border-red-400/50 text-red-300 hover:bg-red-500/25'
           }`}
         >
           <Power className="w-4 h-4" />
           <span>{isPoweredOn ? 'Éteindre' : 'Allumer'}</span>
         </button>
 
-        {/* Reboot */}
-        <button
-          onClick={handleReboot}
-          className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 text-white/80 hover:text-white text-xs font-mono uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer shadow-lg"
-        >
-          <RotateCw className="w-4 h-4 text-amber-400" />
-          <span>Redémarrer OS</span>
-        </button>
-
-        {/* Sound Toggle */}
+        {/* Audio Toggle */}
         <button
           onClick={() => setSoundEnabled(!soundEnabled)}
           className="px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 text-white/70 hover:text-amber-300 text-xs font-mono flex items-center gap-1.5 transition-all cursor-pointer shadow-lg"
@@ -274,19 +315,31 @@ const Laptop3D = () => {
         </button>
       </div>
 
-      {/* Mouse Drag Hint */}
-      <div className="relative z-10 flex items-center justify-center gap-2 text-xs font-mono text-white/50 mb-2">
-        <MousePointer className="w-3.5 h-3.5 text-amber-400 animate-bounce" />
-        <span>Cliquez et glissez la souris pour faire pivoter l'ordinateur en 3D</span>
+      {/* Interactive Helper Banner */}
+      <div className="relative z-10 flex flex-wrap items-center justify-center gap-4 text-xs font-mono text-white/60 mb-1 px-4">
+        <span className="flex items-center gap-1.5">
+          <Hand className="w-3.5 h-3.5 text-amber-400" />
+          <span>Bouton clignotant sur la tranche gauche pour ouvrir</span>
+        </span>
+        <span className="text-white/20">•</span>
+        <span className="flex items-center gap-1.5">
+          <Power className="w-3.5 h-3.5 text-emerald-400" />
+          <span>Touche Power sur le clavier pour allumer</span>
+        </span>
+        <span className="text-white/20">•</span>
+        <span className="flex items-center gap-1.5">
+          <MousePointer className="w-3.5 h-3.5 text-blue-400" />
+          <span>Glissez la souris pour faire pivoter le PC</span>
+        </span>
       </div>
 
       {/* 3D Canvas Stage */}
-      <div className="relative w-full h-[620px] sm:h-[680px] max-w-6xl mx-auto px-4">
+      <div className="relative w-full h-[640px] sm:h-[700px] max-w-6xl mx-auto px-4">
         <Suspense
           fallback={
             <div className="w-full h-full flex flex-col items-center justify-center text-amber-300 font-mono text-sm">
               <div className="w-12 h-12 border-2 border-amber-400 border-t-transparent rounded-full animate-spin mb-4" />
-              <span>Chargement du modèle 3D lenovo-notebook.glb...</span>
+              <span>Chargement du modèle 3D interactif lenovo-notebook.glb...</span>
             </div>
           }
         >
@@ -304,6 +357,14 @@ const Laptop3D = () => {
               lightRef={lightRef}
               bootScreenRef={bootScreenRef}
               screenRef={screenRef}
+              openButtonRef={openButtonRef}
+              closeButtonRef={closeButtonRef}
+              powerOnButtonRef={powerOnButtonRef}
+              powerOffButtonRef={powerOffButtonRef}
+              bootAudio={bootAudio}
+              turnComputerFansOn={turnComputerFansOn}
+              turnComputerFansOff={turnComputerFansOff}
+              soundEnabled={soundEnabled}
             />
           </Canvas>
         </Suspense>
