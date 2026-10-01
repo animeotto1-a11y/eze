@@ -1,11 +1,12 @@
 import React, { useRef, useState, useEffect, Suspense } from 'react';
-import { Canvas } from '@react-three/fiber';
-import { PresentationControls, ContactShadows, useGLTF, useAnimations } from '@react-three/drei';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { ContactShadows, useGLTF, useAnimations } from '@react-three/drei';
+import * as THREE from 'three';
 import gsap from 'gsap';
 import {
   Laptop,
   Power,
-  RotateCw,
+  RotateCcw,
   Sparkles,
   Volume2,
   VolumeX,
@@ -13,59 +14,61 @@ import {
   Calendar,
   ShieldCheck,
   MousePointer,
-  Hand
+  CheckCircle2,
+  BellRing
 } from 'lucide-react';
 import LenovoBook from './r3f-portfolio/LenovoBook';
 import Env from './r3f-portfolio/Env';
 import RectLight from './r3f-portfolio/RectLight';
 import StudioScreen from './r3f-portfolio/StudioScreen';
-import HingeButtons from './r3f-portfolio/HingeButtons';
-import PowerButtons from './r3f-portfolio/PowerButtons';
-import Captions from './r3f-portfolio/Captions';
-import useNotebook from './r3f-portfolio/useNotebook';
 import Footer from './Footer';
 
-// Inner 3D Laptop Scene leveraging lenovo-notebook.glb, exact side hinge button, and power button
-function LaptopScene({
+// 3D Laptop Model Scene with scroll-driven smooth opening & rock-solid bounded mouse drag
+function LaptopModel({
+  openProgress,
+  isPoweredOn,
+  targetRotation,
   lightRef,
-  bootScreenRef,
-  screenRef,
-  openButtonRef,
-  closeButtonRef,
-  powerOnButtonRef,
-  powerOffButtonRef,
-  bootAudio,
-  turnComputerFansOn,
-  turnComputerFansOff,
-  soundEnabled,
 }) {
   const { nodes, materials, animations } = useGLTF('/models/lenovo-notebook.glb');
   const groupRef = useRef();
   const lenovoBookRef = useRef();
-
-  const isOpen = useNotebook((state) => state.isOpen);
-  const isPoweredOn = useNotebook((state) => state.isPoweredOn);
-  const isFinishedBooting = useNotebook((state) => state.isFinishedBooting);
-  const open = useNotebook((state) => state.open);
-  const close = useNotebook((state) => state.close);
-  const powerOn = useNotebook((state) => state.powerOn);
-  const powerOff = useNotebook((state) => state.powerOff);
-  const finishBooting = useNotebook((state) => state.finishBooting);
-
   const animationsObject = useAnimations(animations, groupRef);
 
-  // Screen light helpers
-  const screenLightOn = (ref) => {
-    if (ref?.current) {
-      gsap.to(ref.current, { intensity: 3, duration: 1 });
-    }
-  };
+  // Initialize Open animation and scrub action.time according to openProgress
+  useEffect(() => {
+    if (!animationsObject?.actions?.['Open']) return;
+    const action = animationsObject.actions['Open'];
+    action.play();
+    action.paused = true;
+  }, [animationsObject?.actions]);
 
-  const screenLightOff = (ref) => {
-    if (ref?.current) {
-      gsap.to(ref.current, { intensity: 0, duration: 0.8 });
+  // Scrub animation smoothly with scroll
+  useEffect(() => {
+    if (!animationsObject?.actions?.['Open']) return;
+    const action = animationsObject.actions['Open'];
+    const clipDuration = action.getClip().duration || 1.5833;
+    // Map openProgress (0 to 1) to animation time (0 to clipDuration)
+    action.time = Math.min(Math.max(openProgress * clipDuration, 0), clipDuration);
+  }, [openProgress, animationsObject?.actions]);
+
+  // Smooth 60fps lerp for mouse rotation so the laptop NEVER flips or disappears
+  useFrame(() => {
+    if (groupRef.current) {
+      groupRef.current.rotation.x = THREE.MathUtils.lerp(
+        groupRef.current.rotation.x,
+        targetRotation.x,
+        0.08
+      );
+      groupRef.current.rotation.y = THREE.MathUtils.lerp(
+        groupRef.current.rotation.y,
+        targetRotation.y,
+        0.08
+      );
     }
-  };
+  });
+
+  const isFullyOpen = openProgress >= 0.85;
 
   return (
     <>
@@ -73,78 +76,29 @@ function LaptopScene({
       <ambientLight intensity={0.7} />
       <directionalLight position={[5, 10, 5]} intensity={1.2} castShadow />
 
-      <PresentationControls
-        global={false}
-        cursor={true}
-        polar={[-0.2, 0.25]}
-        azimuth={[-0.7, 0.7]}
-        config={{ mass: 2, tension: 350 }}
-        snap={{ mass: 4, tension: 350 }}
-      >
-        <group ref={groupRef} position={[0, -0.2, 0]} scale={[1, 1, 1]}>
-          {/* Authentic 3D Lenovo Mesh from r3f-portfolio */}
-          <LenovoBook
-            nodes={nodes}
-            materials={materials}
-            refName={lenovoBookRef}
-          />
+      <group ref={groupRef} position={[0, -0.15, 0]} scale={[1, 1, 1]}>
+        {/* Real Lenovo 3D Notebook Mesh */}
+        <LenovoBook
+          nodes={nodes}
+          materials={materials}
+          refName={lenovoBookRef}
+        />
 
-          {/* Screen Light illuminating the keyboard */}
-          <RectLight lightRef={lightRef} intensity={isPoweredOn && isOpen ? 2.8 : 0} />
+        {/* Ambient screen backlight illuminating keyboard */}
+        <RectLight
+          lightRef={lightRef}
+          intensity={isPoweredOn && isFullyOpen ? 2.8 : 0}
+        />
 
-          {/* Side Hinge Button to Open / Close the Laptop with GSAP & GLTF Animation */}
-          <HingeButtons
-            animationsObject={animationsObject}
-            isOpen={isOpen}
-            open={open}
-            close={close}
-            openButtonRef={openButtonRef}
-            closeButtonRef={closeButtonRef}
-            powerOnButtonRef={powerOnButtonRef}
-            powerOffButtonRef={powerOffButtonRef}
-            screenLightOn={screenLightOn}
-            screenLightOff={screenLightOff}
-            lightRef={lightRef}
-            isPoweredOn={isPoweredOn}
-            isFinishedBooting={isFinishedBooting}
-            screenRef={screenRef}
-          />
-
-          {/* Keyboard Power Button with Sound & Boot Animation */}
-          <PowerButtons
-            bootAudio={bootAudio}
-            turnComputerFansOn={turnComputerFansOn}
-            turnComputerFansOff={turnComputerFansOff}
-            powerOn={powerOn}
-            powerOff={powerOff}
-            finishBooting={finishBooting}
-            powerOnButtonRef={powerOnButtonRef}
-            powerOffButtonRef={powerOffButtonRef}
-            closeButtonRef={closeButtonRef}
-            screenLightOn={screenLightOn}
-            screenLightOff={screenLightOff}
-            lightRef={lightRef}
-            screenRef={screenRef}
-            soundEnabled={soundEnabled}
-          />
-
-          {/* Studio Ezélia Live Interactive Display inside the Laptop */}
+        {/* Studio Screen appears when laptop is open */}
+        {isFullyOpen && (
           <StudioScreen
-            isOpen={isOpen}
+            isOpen={true}
             isPoweredOn={isPoweredOn}
-            isFinishedBooting={isFinishedBooting}
-            bootScreenRef={bootScreenRef}
-            screenRef={screenRef}
+            isFinishedBooting={true}
           />
-
-          {/* Floating 3D Guided Captions in Space */}
-          <Captions
-            isOpen={isOpen}
-            isPoweredOn={isPoweredOn}
-            isFinishedBooting={isFinishedBooting}
-          />
-        </group>
-      </PresentationControls>
+        )}
+      </group>
 
       <ContactShadows
         position={[0, -0.65, 0]}
@@ -157,221 +111,275 @@ function LaptopScene({
   );
 }
 
-// Preload 3D Model
 useGLTF.preload('/models/lenovo-notebook.glb');
 
 const Laptop3D = () => {
+  const containerRef = useRef(null);
   const lightRef = useRef();
-  const bootScreenRef = useRef();
-  const screenRef = useRef();
 
-  // 3D Button Refs
-  const openButtonRef = useRef();
-  const closeButtonRef = useRef();
-  const powerOnButtonRef = useRef();
-  const powerOffButtonRef = useRef();
-
-  // Sounds
-  const [bootAudio] = useState(() => new Audio('/sounds/beep.wav'));
-  const [fanAudio] = useState(() => new Audio('/sounds/fan.mp3'));
+  // Scroll and Opening States
+  const [openProgress, setOpenProgress] = useState(0); // 0 (closed) to 1 (fully open)
+  const [isPoweredOn, setIsPoweredOn] = useState(true);
+  const [showSignal, setShowSignal] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const hasSignaledRef = useRef(false);
 
-  // Zustand State
-  const isOpen = useNotebook((state) => state.isOpen);
-  const isPoweredOn = useNotebook((state) => state.isPoweredOn);
-  const isFinishedBooting = useNotebook((state) => state.isFinishedBooting);
+  // Mouse Drag Rotation (firmly bounded so laptop never disappears)
+  const [targetRotation, setTargetRotation] = useState({ x: 0.08, y: 0 });
+  const isDraggingRef = useRef(false);
+  const prevPointerRef = useRef({ x: 0, y: 0 });
 
-  // Fan audio management
-  const turnComputerFansOn = () => {
-    if (!soundEnabled) return;
-    try {
-      fanAudio.volume = 0;
-      fanAudio.play().catch(() => {});
-      const targetVolume = 0.2;
-      const fadeDuration = 3000;
-      const fadeInInterval = 100;
-      let currentTime = 0;
-      const interval = setInterval(() => {
-        currentTime += fadeInInterval;
-        fanAudio.volume = Math.min((currentTime / fadeDuration) * targetVolume, targetVolume);
-        if (currentTime >= fadeDuration || fanAudio.volume === targetVolume) {
-          clearInterval(interval);
-        }
-      }, fadeInInterval);
-    } catch (e) {}
+  // Sound effects
+  const [beepAudio] = useState(() => new Audio('/sounds/beep.wav'));
+  const [fanAudio] = useState(() => new Audio('/sounds/fan.mp3'));
 
-    setTimeout(() => {
-      turnComputerFansOff();
-    }, 9000);
-  };
-
-  const turnComputerFansOff = () => {
-    try {
-      const fadeOutInterval = 50;
-      const fadeSteps = 30;
-      const initialVolume = fanAudio.volume;
-      let currentStep = 0;
-      const volumeDecrement = initialVolume / fadeSteps;
-      const interval = setInterval(() => {
-        currentStep++;
-        const nextVolume = initialVolume - currentStep * volumeDecrement;
-        fanAudio.volume = Math.max(nextVolume, 0);
-        if (currentStep >= fadeSteps || fanAudio.volume === 0) {
-          clearInterval(interval);
-          fanAudio.pause();
-          fanAudio.volume = initialVolume;
-        }
-      }, fadeOutInterval);
-    } catch (e) {}
-  };
-
-  // External trigger for side open/close button
-  const triggerHingeClick = () => {
-    if (isOpen) {
-      if (closeButtonRef.current) closeButtonRef.current.click();
+  // Fan sound effect when laptop powers on
+  useEffect(() => {
+    if (openProgress >= 0.85 && isPoweredOn && soundEnabled) {
+      try {
+        fanAudio.volume = 0.15;
+        fanAudio.play().catch(() => {});
+      } catch (e) {}
     } else {
-      if (openButtonRef.current) openButtonRef.current.click();
+      try {
+        fanAudio.pause();
+      } catch (e) {}
     }
+    return () => {
+      try { fanAudio.pause(); } catch (e) {}
+    };
+  }, [openProgress, isPoweredOn, soundEnabled]);
+
+  // Scroll listener: progressive smooth opening until center of section + scroll buffer (1 to 5 wheel ticks)
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const totalScrollable = containerRef.current.scrollHeight - window.innerHeight;
+      if (totalScrollable <= 0) return;
+
+      // Scrolled distance within this section
+      const scrolled = -rect.top;
+      const progress = Math.min(Math.max(scrolled / totalScrollable, 0), 1);
+
+      // Phase 1 (0% to 45%): Progressive smooth opening (surtout pas rapidement)
+      // Phase 2 (45% to 85%): Locked open at the center (1 à 5 coups de roulette de marge pour en profiter !)
+      // Phase 3 (85% to 100%): Normal continuation to bottom
+      let openingFraction = 0;
+      if (progress < 0.45) {
+        openingFraction = progress / 0.45;
+      } else {
+        openingFraction = 1.0;
+      }
+
+      setOpenProgress(openingFraction);
+
+      // Haptic Vibration & Audio Signal when arriving fully open at the center
+      if (openingFraction >= 0.98 && !hasSignaledRef.current) {
+        hasSignaledRef.current = true;
+        setShowSignal(true);
+
+        // Haptic feedback for mobile & supporting trackpads/browsers
+        if (typeof navigator !== 'undefined' && navigator.vibrate) {
+          try {
+            navigator.vibrate([40, 60, 40]);
+          } catch (e) {}
+        }
+
+        // Chime audio
+        if (soundEnabled) {
+          try {
+            beepAudio.currentTime = 0;
+            beepAudio.volume = 0.3;
+            beepAudio.play().catch(() => {});
+          } catch (e) {}
+        }
+
+        setTimeout(() => {
+          setShowSignal(false);
+        }, 3500);
+      } else if (openingFraction < 0.4) {
+        hasSignaledRef.current = false;
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [soundEnabled]);
+
+  // Pointer Drag Handlers (Smooth & Bounded: Yaw [-45°, +45°], Pitch [-10°, +22°])
+  const handlePointerDown = (e) => {
+    isDraggingRef.current = true;
+    prevPointerRef.current = { x: e.clientX, y: e.clientY };
   };
 
-  // External trigger for keyboard power button
-  const triggerPowerClick = () => {
-    if (isPoweredOn) {
-      if (powerOffButtonRef.current) powerOffButtonRef.current.click();
-    } else {
-      if (powerOnButtonRef.current) powerOnButtonRef.current.click();
-    }
+  const handlePointerMove = (e) => {
+    if (!isDraggingRef.current) return;
+    const deltaX = e.clientX - prevPointerRef.current.x;
+    const deltaY = e.clientY - prevPointerRef.current.y;
+    prevPointerRef.current = { x: e.clientX, y: e.clientY };
+
+    setTargetRotation((prev) => ({
+      // Pitch (X-axis) strictly bounded so laptop NEVER flips or clips
+      x: Math.min(Math.max(prev.x + deltaY * 0.004, -0.12), 0.35),
+      // Yaw (Y-axis) bounded between -0.75 rad and +0.75 rad
+      y: Math.min(Math.max(prev.y + deltaX * 0.006, -0.75), 0.75),
+    }));
   };
+
+  const handlePointerUp = () => {
+    isDraggingRef.current = false;
+  };
+
+  const resetRotation = () => {
+    setTargetRotation({ x: 0.08, y: 0 });
+  };
+
+  const openPercent = Math.round(openProgress * 100);
 
   return (
-    <section id="laptop-3d" className="relative w-full min-h-screen bg-neutral-950 text-white overflow-hidden pt-24 pb-16 flex flex-col justify-between select-none">
-      {/* Background Ambience */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-amber-500/10 blur-[150px] pointer-events-none rounded-full" />
-      <div className="absolute inset-0 bg-radial from-transparent via-black/40 to-neutral-950 pointer-events-none" />
+    <section ref={containerRef} id="laptop-3d" className="relative w-full h-[280vh] bg-neutral-950 text-white select-none">
+      {/* Sticky Stage keeping the laptop fixed in view as user scrolls */}
+      <div className="sticky top-0 h-screen w-full overflow-hidden flex flex-col justify-between py-12 px-6">
+        {/* Background Ambience */}
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-amber-500/10 blur-[150px] pointer-events-none rounded-full" />
+        <div className="absolute inset-0 bg-radial from-transparent via-black/40 to-neutral-950 pointer-events-none" />
 
-      {/* Section Header */}
-      <div className="relative z-10 max-w-5xl mx-auto px-6 text-center mb-6">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-amber-400/30 text-amber-300 text-xs font-mono uppercase tracking-widest shadow-xl mb-4">
-          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-          <span>Projet R3F Officiel • Animations Natives GLTF</span>
+        {/* Section Header */}
+        <div className="relative z-10 max-w-5xl mx-auto text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-amber-400/30 text-amber-300 text-xs font-mono uppercase tracking-widest shadow-xl mb-3">
+            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+            <span>Studio Ezélia • Expérience 3D Interactive</span>
+          </div>
+
+          <h2 className="font-serif text-3xl sm:text-5xl md:text-6xl font-extrabold text-white mb-2">
+            L'Ordinateur <span className="bg-gradient-to-r from-amber-200 via-amber-400 to-amber-600 bg-clip-text text-transparent">Connecté</span>
+          </h2>
+
+          <p className="text-sm sm:text-base text-amber-100/90 font-light italic max-w-xl mx-auto">
+            « L'art à portée de main » — L'ordinateur s'ouvre progressivement avec la roulette de votre souris.
+          </p>
         </div>
 
-        <h2 className="font-serif text-3xl sm:text-5xl md:text-6xl font-extrabold text-white mb-3">
-          L'Ordinateur <span className="bg-gradient-to-r from-amber-200 via-amber-400 to-amber-600 bg-clip-text text-transparent">Interactif 3D</span>
-        </h2>
+        {/* Dynamic Status Badges & Controls Bar */}
+        <div className="relative z-20 max-w-3xl mx-auto flex flex-wrap items-center justify-center gap-3">
+          {/* Opening Progress Badge */}
+          <div className="px-4 py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-xs font-mono flex items-center gap-2">
+            <Laptop className="w-3.5 h-3.5 text-amber-400" />
+            <span>Clapet :</span>
+            <span className={openPercent >= 100 ? 'text-emerald-400 font-bold' : 'text-amber-400 font-bold'}>
+              {openPercent >= 100 ? 'Ouvert à 100%' : `${openPercent}%`}
+            </span>
+          </div>
 
-        <p className="text-base sm:text-lg text-amber-100/90 font-light italic max-w-xl mx-auto">
-          « L'art à portée de main » — Cliquez sur le bouton latéral pour ouvrir le PC, allumez le clavier et interagissez en 3D.
-        </p>
-      </div>
-
-      {/* Interactive Controls & Status Bar */}
-      <div className="relative z-20 max-w-4xl mx-auto px-6 flex flex-wrap items-center justify-center gap-3 mb-2">
-        {/* Status Clapet */}
-        <button
-          onClick={triggerHingeClick}
-          className={`px-4 py-2 rounded-xl border text-xs font-mono uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer shadow-lg ${
-            isOpen
-              ? 'bg-amber-500/15 border-amber-400/50 text-amber-300 hover:bg-amber-500/25'
-              : 'bg-white/5 border-white/20 text-white hover:bg-white/10'
-          }`}
-        >
-          <Laptop className="w-4 h-4 text-amber-400" />
-          <span>{isOpen ? 'Fermer le Clapet 3D' : 'Ouvrir le Clapet 3D'}</span>
-        </button>
-
-        {/* Status Power */}
-        <button
-          onClick={triggerPowerClick}
-          disabled={!isOpen}
-          className={`px-4 py-2 rounded-xl border text-xs font-mono uppercase tracking-wider flex items-center gap-2 transition-all shadow-lg ${
-            !isOpen
-              ? 'opacity-40 cursor-not-allowed bg-white/5 border-white/10 text-neutral-400'
-              : isPoweredOn
-              ? 'cursor-pointer bg-emerald-500/15 border-emerald-400/50 text-emerald-300 hover:bg-emerald-500/25'
-              : 'cursor-pointer bg-red-500/15 border-red-400/50 text-red-300 hover:bg-red-500/25'
-          }`}
-        >
-          <Power className="w-4 h-4" />
-          <span>{isPoweredOn ? 'Éteindre' : 'Allumer'}</span>
-        </button>
-
-        {/* Audio Toggle */}
-        <button
-          onClick={() => setSoundEnabled(!soundEnabled)}
-          className="px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 text-white/70 hover:text-amber-300 text-xs font-mono flex items-center gap-1.5 transition-all cursor-pointer shadow-lg"
-        >
-          {soundEnabled ? (
-            <>
-              <Volume2 className="w-4 h-4 text-amber-400" />
-              <span>Sons Activés</span>
-            </>
-          ) : (
-            <>
-              <VolumeX className="w-4 h-4 text-neutral-400" />
-              <span>Muet</span>
-            </>
-          )}
-        </button>
-      </div>
-
-      {/* Interactive Helper Banner */}
-      <div className="relative z-10 flex flex-wrap items-center justify-center gap-4 text-xs font-mono text-white/60 mb-1 px-4">
-        <span className="flex items-center gap-1.5">
-          <Hand className="w-3.5 h-3.5 text-amber-400" />
-          <span>Bouton clignotant sur la tranche gauche pour ouvrir</span>
-        </span>
-        <span className="text-white/20">•</span>
-        <span className="flex items-center gap-1.5">
-          <Power className="w-3.5 h-3.5 text-emerald-400" />
-          <span>Touche Power sur le clavier pour allumer</span>
-        </span>
-        <span className="text-white/20">•</span>
-        <span className="flex items-center gap-1.5">
-          <MousePointer className="w-3.5 h-3.5 text-blue-400" />
-          <span>Glissez la souris pour faire pivoter le PC</span>
-        </span>
-      </div>
-
-      {/* 3D Canvas Stage */}
-      <div className="relative w-full h-[640px] sm:h-[700px] max-w-6xl mx-auto px-4">
-        <Suspense
-          fallback={
-            <div className="w-full h-full flex flex-col items-center justify-center text-amber-300 font-mono text-sm">
-              <div className="w-12 h-12 border-2 border-amber-400 border-t-transparent rounded-full animate-spin mb-4" />
-              <span>Chargement du modèle 3D interactif lenovo-notebook.glb...</span>
-            </div>
-          }
-        >
-          <Canvas
-            camera={{
-              fov: 42,
-              near: 0.1,
-              far: 100,
-              position: [0, 1.3, 5.2],
-            }}
-            shadows
-            className="cursor-grab active:cursor-grabbing"
+          {/* Power Toggle */}
+          <button
+            onClick={() => setIsPoweredOn(!isPoweredOn)}
+            disabled={openProgress < 0.85}
+            className={`px-4 py-1.5 rounded-full border text-xs font-mono uppercase tracking-wider flex items-center gap-2 transition-all shadow-lg ${
+              openProgress < 0.85
+                ? 'opacity-40 cursor-not-allowed bg-white/5 border-white/10 text-neutral-400'
+                : isPoweredOn
+                ? 'cursor-pointer bg-emerald-500/15 border-emerald-400/50 text-emerald-300 hover:bg-emerald-500/25'
+                : 'cursor-pointer bg-red-500/15 border-red-400/50 text-red-300 hover:bg-red-500/25'
+            }`}
           >
-            <LaptopScene
-              lightRef={lightRef}
-              bootScreenRef={bootScreenRef}
-              screenRef={screenRef}
-              openButtonRef={openButtonRef}
-              closeButtonRef={closeButtonRef}
-              powerOnButtonRef={powerOnButtonRef}
-              powerOffButtonRef={powerOffButtonRef}
-              bootAudio={bootAudio}
-              turnComputerFansOn={turnComputerFansOn}
-              turnComputerFansOff={turnComputerFansOff}
-              soundEnabled={soundEnabled}
-            />
-          </Canvas>
-        </Suspense>
+            <Power className="w-3.5 h-3.5" />
+            <span>{isPoweredOn ? 'Écran Allumé' : 'Écran Éteint'}</span>
+          </button>
+
+          {/* Reset Rotation */}
+          <button
+            onClick={resetRotation}
+            className="px-3.5 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/15 text-white/80 hover:text-white text-xs font-mono flex items-center gap-1.5 transition-all cursor-pointer shadow-lg"
+          >
+            <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
+            <span>Recentrer</span>
+          </button>
+
+          {/* Audio Toggle */}
+          <button
+            onClick={() => setSoundEnabled(!soundEnabled)}
+            className="px-3.5 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/15 text-white/70 hover:text-amber-300 text-xs font-mono flex items-center gap-1.5 transition-all cursor-pointer shadow-lg"
+          >
+            {soundEnabled ? (
+              <>
+                <Volume2 className="w-3.5 h-3.5 text-amber-400" />
+                <span>Son Actif</span>
+              </>
+            ) : (
+              <>
+                <VolumeX className="w-3.5 h-3.5 text-neutral-400" />
+                <span>Muet</span>
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* Signal & Vibration Notification Banner */}
+        <div className="relative z-30 h-8 flex items-center justify-center">
+          {showSignal && (
+            <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-gradient-to-r from-amber-500/30 via-emerald-500/30 to-amber-500/30 border border-amber-400/60 backdrop-blur-xl text-amber-200 text-xs font-mono animate-bounce shadow-2xl">
+              <BellRing className="w-4 h-4 text-amber-400 animate-pulse" />
+              <span>✦ Signal : Ordinateur prêt ! Faites pivoter à la souris ou interagissez sur l'écran</span>
+            </div>
+          )}
+        </div>
+
+        {/* 3D Canvas with safe, bounded mouse drag */}
+        <div
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerLeave={handlePointerUp}
+          className="relative w-full h-[520px] sm:h-[580px] max-w-5xl mx-auto cursor-grab active:cursor-grabbing flex items-center justify-center"
+        >
+          <Suspense
+            fallback={
+              <div className="w-full h-full flex flex-col items-center justify-center text-amber-300 font-mono text-sm">
+                <div className="w-10 h-10 border-2 border-amber-400 border-t-transparent rounded-full animate-spin mb-3" />
+                <span>Chargement du modèle 3D...</span>
+              </div>
+            }
+          >
+            <Canvas
+              camera={{
+                fov: 40,
+                near: 0.1,
+                far: 50,
+                position: [0, 1.2, 5.0],
+              }}
+              shadows
+              className="w-full h-full pointer-events-auto"
+            >
+              <LaptopModel
+                openProgress={openProgress}
+                isPoweredOn={isPoweredOn}
+                targetRotation={targetRotation}
+                lightRef={lightRef}
+              />
+            </Canvas>
+          </Suspense>
+        </div>
+
+        {/* Bottom Scroll & Interaction Prompt */}
+        <div className="relative z-10 flex flex-col items-center justify-center gap-1 text-center">
+          <div className="flex items-center gap-2 text-xs font-mono text-white/50">
+            <MousePointer className="w-3.5 h-3.5 text-amber-400" />
+            <span>Glissez pour faire pivoter à 360° • Continuez de faire défiler pour la suite</span>
+          </div>
+          {openPercent >= 100 && (
+            <span className="text-[11px] font-mono text-emerald-400/80">
+              ✓ Clapet verrouillé ouvert • Continuez le scroll pour accéder à la réservation
+            </span>
+          )}
+        </div>
       </div>
 
-      {/* VIP Booking & Studio Contact Card */}
-      <div className="relative z-20 max-w-4xl mx-auto px-6 mt-12 mb-16">
+      {/* VIP Booking & Studio Contact Card (Appears as user scrolls past the laptop stage) */}
+      <div className="relative z-20 max-w-4xl mx-auto px-6 pt-32 pb-16">
         <div className="rounded-3xl bg-gradient-to-br from-white/10 via-white/5 to-transparent border border-amber-500/30 p-8 sm:p-10 backdrop-blur-xl shadow-2xl relative overflow-hidden">
           <div className="absolute top-0 right-0 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -410,10 +418,12 @@ const Laptop3D = () => {
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Website Footer */}
-      <Footer />
+        {/* Website Footer */}
+        <div className="mt-16">
+          <Footer />
+        </div>
+      </div>
     </section>
   );
 };
