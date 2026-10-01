@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect, Suspense } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { ContactShadows, useGLTF, useAnimations } from '@react-three/drei';
+import { ContactShadows, useGLTF, Html } from '@react-three/drei';
 import * as THREE from 'three';
 import {
   Laptop,
@@ -21,35 +21,33 @@ import RectLight from './r3f-portfolio/RectLight';
 import StudioScreen from './r3f-portfolio/StudioScreen';
 import Footer from './Footer';
 
-// 3D Laptop Model Scene: scrub mixer.setTime for slow, progressive opening & smooth bounded drag
+// Quaternion values extracted directly from the GLTF Open animation
+// Start: Closed flat on chassis; End: Open upright at ~110°
+const qClosed = new THREE.Quaternion(-1.0, 0, 0, 0.0013);
+const qOpen = new THREE.Quaternion(0.6279, 0, 0, 0.7783);
+const pClosed = new THREE.Vector3(0.0075, -0.4106, -10.4124);
+const pOpen = new THREE.Vector3(0.0075, -0.4718, -10.4124);
+
+// 3D Laptop Model Scene: direct quaternion slerp for 100% reliable opening & rock-solid mouse drag
 function LaptopModel({
   openProgress,
   isPoweredOn,
+  onTogglePower,
   targetRotation,
   lightRef,
 }) {
-  const { nodes, materials, animations } = useGLTF('/models/lenovo-notebook.glb');
+  const { nodes, materials } = useGLTF('/models/lenovo-notebook.glb');
   const groupRef = useRef();
   const lenovoBookRef = useRef();
-  const animationsObject = useAnimations(animations, groupRef);
 
-  useEffect(() => {
-    if (!animationsObject?.actions?.['Open']) return;
-    const action = animationsObject.actions['Open'];
-    action.play();
-  }, [animationsObject?.actions]);
-
-  // Scrub the GLTF mixer directly inside useFrame so every single millisecond is faithfully applied
+  // Directly slerp the Top node so it NEVER loops, NEVER snaps shut, and stays open permanently
   useFrame(() => {
-    if (animationsObject?.mixer && animationsObject?.actions?.['Open']) {
-      const action = animationsObject.actions['Open'];
-      const clipDuration = action.getClip().duration || 1.5833;
-      const targetTime = Math.min(Math.max(openProgress * clipDuration, 0), clipDuration);
-      action.time = targetTime;
-      animationsObject.mixer.setTime(targetTime);
+    if (nodes?.Top) {
+      nodes.Top.quaternion.slerpQuaternions(qClosed, qOpen, openProgress);
+      nodes.Top.position.lerpVectors(pClosed, pOpen, openProgress);
     }
 
-    // Smooth bounded rotation (Yaw [-35°, +35°], Pitch [-7°, +15°]) so it NEVER disappears
+    // Smooth bounded rotation (Yaw [-35°, +35°], Pitch [-7°, +15°]) so laptop NEVER flips or disappears
     if (groupRef.current) {
       groupRef.current.rotation.x = THREE.MathUtils.lerp(
         groupRef.current.rotation.x,
@@ -64,7 +62,7 @@ function LaptopModel({
     }
   });
 
-  const isScreenVisible = openProgress >= 0.65;
+  const isScreenVisible = openProgress >= 0.92;
 
   return (
     <>
@@ -80,19 +78,41 @@ function LaptopModel({
           refName={lenovoBookRef}
         />
 
-        {/* Dynamic screen glow illuminating keyboard */}
+        {/* Ambient screen glow on keyboard */}
         <RectLight
           lightRef={lightRef}
           intensity={isPoweredOn && isScreenVisible ? 2.8 : 0}
         />
 
-        {/* Studio Screen displays as the laptop opens */}
+        {/* Studio Screen displays ONLY when lid is fully open at ~110° */}
         {isScreenVisible && (
           <StudioScreen
-            isOpen={true}
             isPoweredOn={isPoweredOn}
-            isFinishedBooting={true}
+            onTogglePower={onTogglePower}
           />
+        )}
+
+        {/* Physical 3D Power Button on Keyboard Deck */}
+        {openProgress >= 0.8 && (
+          <Html
+            position={[1.15, 0.52, -0.98]}
+            rotation={[-Math.PI / 2.3, 0, 0]}
+            transform
+            distanceFactor={1.2}
+            className="select-none pointer-events-auto"
+          >
+            <button
+              onClick={onTogglePower}
+              className={`p-2 rounded-full border-2 flex items-center justify-center transition-all cursor-pointer shadow-xl ${
+                isPoweredOn
+                  ? 'bg-emerald-500 border-emerald-300 text-neutral-950 scale-100 hover:scale-110'
+                  : 'bg-amber-500 border-amber-300 text-neutral-950 animate-pulse scale-110 hover:scale-125'
+              }`}
+              title={isPoweredOn ? 'Éteindre le PC' : 'Allumer le PC'}
+            >
+              <Power className="w-3.5 h-3.5" />
+            </button>
+          </Html>
         )}
       </group>
 
@@ -125,7 +145,11 @@ const Laptop3D = () => {
   const isDraggingRef = useRef(false);
   const prevPointerRef = useRef({ x: 0, y: 0 });
 
-  // Progressive scroll listener (slow, gradual opening over a 450vh track)
+  const togglePower = () => {
+    setIsPoweredOn((prev) => !prev);
+  };
+
+  // Scroll listener: slow gradual opening until 50% scroll, THEN STAYS 100% OPEN FOR EVER AS YOU SCROLL DOWN
   useEffect(() => {
     const handleScroll = () => {
       if (!containerRef.current) return;
@@ -134,15 +158,17 @@ const Laptop3D = () => {
       if (totalScrollable <= 0) return;
 
       const scrolled = -rect.top;
-      const progress = Math.min(Math.max(scrolled / totalScrollable, 0), 1);
+      const progress = scrolled / totalScrollable;
 
-      // Phase 1 (0% to 50% = 2.2 full screen heights): Slow, gradual opening (surtout pas rapide !)
-      // Phase 2 (50% to 90% = another 1.8 screen heights): Locked 100% open at center (1 à 5+ coups de roulette)
-      // Phase 3 (90% to 100%): Transition out to VIP booking and footer
       let openingFraction = 0;
-      if (progress < 0.50) {
+      if (progress <= 0) {
+        openingFraction = 0;
+      } else if (progress < 0.50) {
+        // Slow, gradual opening across the first 50% of the long 450vh track
         openingFraction = progress / 0.50;
       } else {
+        // Once past 50%, IT STAYS 100% OPEN! It NEVER closes as you scroll down!
+        // It only closes when you scroll back up past 50%!
         openingFraction = 1.0;
       }
 
@@ -157,7 +183,7 @@ const Laptop3D = () => {
         // Native device vibration (phones, tablets, supported devices)
         if (typeof navigator !== 'undefined' && navigator.vibrate) {
           try {
-            navigator.vibrate([60, 80, 60, 80, 100]);
+            navigator.vibrate([80, 100, 80, 100, 150]);
           } catch (e) {}
         }
 
@@ -170,7 +196,7 @@ const Laptop3D = () => {
         setTimeout(() => {
           setShowVibrationAlert(false);
         }, 4500);
-      } else if (openingFraction < 0.3) {
+      } else if (openingFraction < 0.25) {
         hasTriggeredVibrationRef.current = false;
       }
     };
@@ -213,7 +239,7 @@ const Laptop3D = () => {
 
   return (
     <div className="w-full bg-neutral-950">
-      {/* 1. DEDICATED SCROLL TRACK FOR 3D LAPTOP (450vh = ample room for slow, smooth opening & 1-5 wheel lock) */}
+      {/* 1. DEDICATED SCROLL TRACK FOR 3D LAPTOP (450vh) */}
       <section
         ref={containerRef}
         id="laptop-3d"
@@ -245,7 +271,7 @@ const Laptop3D = () => {
             </p>
           </div>
 
-          {/* Prominent Controls Bar with High-Visibility Power Button */}
+          {/* Prominent Controls Bar with HIGH-VISIBILITY Power Button */}
           <div className="relative z-20 max-w-3xl mx-auto flex flex-wrap items-center justify-center gap-3">
             {/* Clapet State Badge */}
             <div className="px-4 py-2 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-xs font-mono flex items-center gap-2 shadow-lg">
@@ -256,17 +282,17 @@ const Laptop3D = () => {
               </span>
             </div>
 
-            {/* VERY CLEAR, PROMINENT BUTTON TO TURN COMPUTER SCREEN ON/OFF */}
+            {/* VERY CLEAR, LARGE BUTTON TO TURN COMPUTER SCREEN ON/OFF */}
             <button
-              onClick={() => setIsPoweredOn(!isPoweredOn)}
-              className={`px-5 py-2 rounded-full font-mono text-xs uppercase tracking-wider flex items-center gap-2.5 transition-all shadow-xl cursor-pointer ${
+              onClick={togglePower}
+              className={`px-6 py-2.5 rounded-full font-mono text-xs uppercase tracking-wider flex items-center gap-2.5 transition-all shadow-xl cursor-pointer ${
                 isPoweredOn
-                  ? 'bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-bold shadow-emerald-500/25 ring-2 ring-emerald-400/50'
-                  : 'bg-amber-500 hover:bg-amber-400 text-neutral-950 font-bold shadow-amber-500/30 animate-pulse ring-2 ring-amber-400/50'
+                  ? 'bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-bold shadow-emerald-500/30 ring-2 ring-emerald-400/60'
+                  : 'bg-amber-500 hover:bg-amber-400 text-neutral-950 font-bold shadow-amber-500/40 animate-pulse ring-2 ring-amber-400/60'
               }`}
             >
               <Power className="w-4 h-4" />
-              <span>{isPoweredOn ? '⚡ Écran Allumé (Cliquer pour éteindre)' : '⚡ ALLUMER L\'ÉCRAN'}</span>
+              <span>{isPoweredOn ? '⚡ ÉCRAN ALLUMÉ (Cliquer pour éteindre)' : '⚡ ALLUMER L\'ORDINATEUR'}</span>
             </button>
 
             {/* Recenter Button */}
@@ -318,6 +344,7 @@ const Laptop3D = () => {
                 <LaptopModel
                   openProgress={openProgress}
                   isPoweredOn={isPoweredOn}
+                  onTogglePower={togglePower}
                   targetRotation={targetRotation}
                   lightRef={lightRef}
                 />
@@ -334,12 +361,12 @@ const Laptop3D = () => {
             {openPercent >= 100 ? (
               <span className="text-[11px] font-mono text-emerald-400/90 flex items-center gap-1">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                <span>L'ordinateur est verrouillé ouvert • Faites défiler la roulette pour la réservation</span>
+                <span>L'ordinateur reste grand ouvert • Faites défiler pour accéder à la réservation VIP</span>
               </span>
             ) : (
               <span className="text-[11px] font-mono text-amber-300/70 flex items-center gap-1">
                 <ChevronDown className="w-3.5 h-3.5 text-amber-400 animate-bounce" />
-                <span>Continuez de faire rouler la souris lentement pour achever l'ouverture...</span>
+                <span>Faites rouler la molette lentement vers le bas pour ouvrir le PC...</span>
               </span>
             )}
           </div>
