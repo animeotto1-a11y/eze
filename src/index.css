@@ -4,8 +4,8 @@
   body {
     font-family: 'Plus Jakarta Sans', sans-serif;
     scroll-behavior: smooth;
-    background-color: #f8fafc;
-    color: #0f172a;
+    background-color: #0a0a0a;
+    color: #ffffff;
   }
   h1, h2, h3, .font-serif, .font-heading {
     font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
@@ -81,7 +81,7 @@
 
 @keyframes animate-pulse-violet {
   0% {
-    box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.8);
+    box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.85);
   }
   50% {
     box-shadow: 0 0 0 12px rgba(249, 115, 22, 0);

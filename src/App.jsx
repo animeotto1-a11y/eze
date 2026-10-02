@@ -3,7 +3,7 @@ import Header from './components/Header';
 import HeroVideo from './components/HeroVideo';
 import FeaturedCarousel3D from './components/FeaturedCarousel3D';
 import ShowcaseGallery from './components/ShowcaseGallery';
-import Laptop3D from './components/Laptop3D';
+import Footer from './components/Footer';
 import Lightbox from './components/Lightbox';
 import { PHOTOS_DATA } from './data/photos';
 
@@ -12,9 +12,8 @@ const App = () => {
   // Masterwork IDs: 9 (Couple Royal), 2 (Baiser Sacré), 6 (Sceptre & Couronne), 26 (Mémoire N&B)
   const featuredIds = [9, 2, 6, 26];
   const featuredPhotos = featuredIds.map((id) => PHOTOS_DATA.find((p) => p.id === id) || PHOTOS_DATA[0]);
-  const remainingPhotos = PHOTOS_DATA.filter((p) => !featuredIds.includes(p.id));
 
-  // Lightbox state
+  // Lightbox state for HD full-screen viewing
   const [lightboxPhoto, setLightboxPhoto] = useState(null);
   const [lightboxList, setLightboxList] = useState(PHOTOS_DATA);
   const [lightboxIndex, setLightboxIndex] = useState(0);
@@ -54,32 +53,32 @@ const App = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-violet-500/20 selection:text-violet-900 relative overflow-x-hidden">
-      {/* 1. Sticky Navigation Header */}
+    <div className="min-h-screen bg-neutral-950 text-white font-sans selection:bg-violet-500/30 selection:text-violet-200 relative overflow-x-hidden">
+      {/* 1. Navigation Header */}
       <Header />
 
-      {/* 2. Hero Section with Video */}
+      {/* 2. Section Vidéo : Expérience cinématique fluide */}
       <div id="hero">
         <HeroVideo onExploreClick={() => scrollTo('featured-3d')} />
       </div>
 
-      {/* 3. Section Carrousel 3D (4 Masterworks) */}
+      {/* 3. Section Carrousel 3D : Les 4 Œuvres Majeures */}
       <FeaturedCarousel3D
         featuredPhotos={featuredPhotos}
         onExpandPhoto={(photo) => handleOpenLightbox(photo, featuredPhotos)}
         onScrollDown={() => scrollTo('showcase-gallery')}
       />
 
-      {/* 4. Section Défilement des 22 autres images */}
+      {/* 4. Section Galerie Complète : Toutes les photos de la collection */}
       <ShowcaseGallery
-        remainingPhotos={remainingPhotos}
-        onSelectPhoto={(photo) => handleOpenLightbox(photo, remainingPhotos)}
+        remainingPhotos={PHOTOS_DATA}
+        onSelectPhoto={(photo) => handleOpenLightbox(photo, PHOTOS_DATA)}
       />
 
-      {/* 5. Section Finale : L'Ordinateur 3D Interactif */}
-      <Laptop3D photos={PHOTOS_DATA} />
+      {/* 5. Pied de page épuré */}
+      <Footer />
 
-      {/* 6. Lightbox Plein Écran */}
+      {/* 6. Lightbox Plein Écran Haute Définition */}
       {lightboxPhoto && (
         <Lightbox
           photo={lightboxPhoto}

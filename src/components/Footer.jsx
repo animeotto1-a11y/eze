@@ -1,107 +1,61 @@
 import React from 'react';
-import { ChevronLeft, ChevronRight, Maximize2 } from 'lucide-react';
+import { Phone, Calendar, Sparkles } from 'lucide-react';
 
-const Footer = ({
-  activePhoto,
-  activeIndex,
-  totalItems,
-  onPrev,
-  onNext,
-  onExpand,
-  viewMode
-}) => {
+const Footer = () => {
   return (
-    <footer className="relative z-30 flex flex-col items-center gap-4 sm:gap-6 pt-2 pb-6 px-4">
-      {/* 3D Gallery Floating Controls Dock */}
-      {viewMode === '3d' && activePhoto && (
-        <div className="flex flex-col items-center gap-2">
-          <div className="bg-white/90 backdrop-blur-2xl border border-slate-200 shadow-[0_15px_40px_rgba(0,0,0,0.06)] rounded-full px-3 sm:px-5 py-2 flex items-center gap-2 sm:gap-4 max-w-[95vw]">
-            
-            {/* Prev Button */}
-            <button
-              onClick={onPrev}
-              disabled={activeIndex === 0}
-              title="Précédente (Touche ←)"
-              className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-slate-100 hover:bg-violet-600 hover:text-white disabled:opacity-30 flex items-center justify-center transition-all cursor-pointer text-slate-800"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-
-            {/* Thumbnail Preview */}
-            <div 
-              onClick={() => onExpand(activePhoto)}
-              title="Cliquer pour agrandir"
-              className="flex items-center gap-2.5 sm:gap-3 px-1 sm:px-2 cursor-pointer group"
-            >
-              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full overflow-hidden border-2 border-violet-400 group-hover:border-orange-500 shrink-0 transition-colors shadow-sm">
-                <img
-                  src={activePhoto.src}
-                  alt={activePhoto.title}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                />
-              </div>
-              <div className="text-left">
-                <p className="text-[11px] sm:text-xs font-bold font-heading text-slate-900 group-hover:text-violet-600 transition-colors leading-tight truncate max-w-[100px] sm:max-w-[160px]">
-                  {activePhoto.title}
-                </p>
-                <p className="text-[9px] sm:text-[10px] text-violet-600 font-mono font-medium">
-                  {activeIndex + 1} / {totalItems} · {activePhoto.categoryLabel}
-                </p>
-              </div>
-            </div>
-
-            {/* Expand Button in Dock */}
-            <button
-              onClick={() => onExpand(activePhoto)}
-              title="Plein écran (Touche Espace)"
-              className="hidden xs:flex w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-violet-50 hover:bg-violet-600 text-violet-700 hover:text-white border border-violet-200 items-center justify-center transition-all cursor-pointer"
-            >
-              <Maximize2 className="w-4 h-4" />
-            </button>
-
-            {/* Next Button */}
-            <button
-              onClick={onNext}
-              disabled={activeIndex === totalItems - 1}
-              title="Suivante (Touche →)"
-              className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-slate-100 hover:bg-violet-600 hover:text-white disabled:opacity-30 flex items-center justify-center transition-all cursor-pointer text-slate-800"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
-
+    <footer className="relative z-30 w-full bg-neutral-950 border-t border-white/10 py-16 px-6 select-none">
+      <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
+        
+        {/* Brand & Slogan */}
+        <div className="text-center md:text-left">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-500/15 border border-violet-500/30 text-violet-300 text-xs font-mono uppercase tracking-wider mb-3">
+            <Sparkles className="w-3.5 h-3.5 text-orange-400" />
+            <span>Studio Photographique d'Art</span>
           </div>
 
-          {/* Keyboard & gesture guide */}
-          <div className="hidden sm:flex items-center gap-2 text-[10px] font-mono text-slate-400 tracking-wider">
-            <span>Navigation : Flèches <kbd className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">←</kbd> <kbd className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">→</kbd></span>
-            <span>·</span>
-            <span>Molette ou Glissement</span>
-            <span>·</span>
-            <span><kbd className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">Espace</kbd> Plein écran</span>
-          </div>
+          <h2 className="font-heading text-2xl sm:text-3xl font-black text-white tracking-wide">
+            Studio <span className="bg-gradient-to-r from-violet-400 via-purple-400 to-orange-400 bg-clip-text text-transparent">Ezélia</span>
+          </h2>
+          <p className="text-sm text-neutral-400 italic font-medium mt-1">
+            « L'art à portée de main »
+          </p>
+          <p className="text-xs text-neutral-500 mt-2 max-w-sm">
+            Mariages royaux, célébrations d'exception, portraits impériaux et créations photographiques exclusives.
+          </p>
         </div>
-      )}
 
-      {/* Luxury Brand Footer Bar */}
-      <div className="w-full max-w-5xl border-t border-slate-200 pt-5 mt-2 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left text-xs text-slate-500">
+        {/* Contact Buttons */}
+        <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+          <a
+            href="https://wa.me/2250700000000"
+            target="_blank"
+            rel="noreferrer"
+            className="w-full sm:w-auto px-6 py-3 rounded-full bg-gradient-to-r from-violet-600 via-purple-600 to-orange-500 hover:from-violet-500 hover:to-orange-400 text-white font-bold text-xs uppercase tracking-wider transition-all shadow-xl shadow-violet-500/25 flex items-center justify-center gap-2 cursor-pointer hover:scale-105"
+          >
+            <Calendar className="w-4 h-4" />
+            <span>Réserver une Séance</span>
+          </a>
+
+          <a
+            href="tel:+2250700000000"
+            className="w-full sm:w-auto px-5 py-3 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-mono flex items-center justify-center gap-2 transition-all cursor-pointer"
+          >
+            <Phone className="w-3.5 h-3.5 text-violet-400" />
+            <span>+225 07 00 00 00 00</span>
+          </a>
+        </div>
+
+      </div>
+
+      {/* Bottom Copyright */}
+      <div className="max-w-6xl mx-auto border-t border-white/10 mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-neutral-500">
         <div>
-          <span className="font-heading font-bold text-slate-900 tracking-wider uppercase">
-            Studio <span className="bg-gradient-to-r from-violet-600 to-orange-500 bg-clip-text text-transparent">Ezélia</span>
-          </span>
-          <span className="mx-2 text-slate-300">|</span>
-          <span className="italic text-slate-500 font-medium">« L'art à portée de main »</span>
-        </div>
-
-        <div className="flex items-center gap-4 text-[11px] font-mono text-slate-500">
-          <span>Mariage Royal & Civil</span>
-          <span>·</span>
-          <span>Portraits Fine Art</span>
-          <span>·</span>
-          <span>Événements</span>
-        </div>
-
-        <div className="text-[10px] text-slate-400 font-mono">
           © {new Date().getFullYear()} Studio Ezélia. Tous droits réservés.
+        </div>
+        <div className="flex items-center gap-4 font-mono text-[11px]">
+          <span>Abidjan, Côte d'Ivoire</span>
+          <span>·</span>
+          <span>International</span>
         </div>
       </div>
     </footer>

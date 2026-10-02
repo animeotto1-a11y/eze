@@ -66,7 +66,7 @@ const HeroVideo = ({ onExploreClick }) => {
   const progressPercent = Math.round(progress * 100);
 
   return (
-    <section ref={containerRef} className="relative w-full h-[300vh] bg-slate-50">
+    <section ref={containerRef} className="relative w-full h-[300vh] bg-neutral-950">
       {/* Sticky Fullscreen Video Stage */}
       <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center select-none">
         {/* Crystal Clear Video without scaling or blur */}
@@ -79,9 +79,9 @@ const HeroVideo = ({ onExploreClick }) => {
           className="absolute inset-0 w-full h-full object-cover"
         />
 
-        {/* Refined Edge Soft Vignette for Light Theme Integration */}
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-50/85 via-transparent to-slate-50/60 pointer-events-none" />
-        <div className="absolute inset-0 bg-gradient-to-r from-slate-50/40 via-transparent to-slate-50/40 pointer-events-none" />
+        {/* Deep Black Edge Vignette for Seamless Dark Integration */}
+        <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-transparent to-neutral-950/70 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-r from-neutral-950/50 via-transparent to-neutral-950/50 pointer-events-none" />
 
         {/* Content Overlay - Dynamically transitions based on scroll progress */}
         <div className="relative z-10 max-w-5xl mx-auto px-6 text-center flex flex-col items-center pointer-events-none">
@@ -93,19 +93,19 @@ const HeroVideo = ({ onExploreClick }) => {
               transform: `translateY(${progress * -40}px)`,
             }}
           >
-            {/* Prestige Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/80 backdrop-blur-md border border-violet-200/90 text-violet-700 text-xs font-semibold uppercase tracking-wider shadow-md mb-4 pointer-events-auto">
-              <Sparkles className="w-3.5 h-3.5 text-orange-500" />
+            {/* Prestige Badge with EternaCloud Violet Accent */}
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-black/50 backdrop-blur-md border border-violet-500/40 text-violet-300 text-xs font-semibold uppercase tracking-wider shadow-xl mb-4 pointer-events-auto">
+              <Sparkles className="w-3.5 h-3.5 text-orange-400" />
               <span>Fine Art & Célébrations Royales</span>
             </div>
 
             {/* Studio Title with EternaCloud Gradient */}
-            <h1 className="font-heading text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight text-slate-950 mb-3 leading-none drop-shadow-sm">
-              STUDIO <span className="bg-gradient-to-r from-violet-600 via-purple-600 to-orange-500 bg-clip-text text-transparent">EZÉLIA</span>
+            <h1 className="font-heading text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight text-white mb-3 leading-none drop-shadow-2xl">
+              STUDIO <span className="bg-gradient-to-r from-violet-400 via-purple-400 to-orange-400 bg-clip-text text-transparent">EZÉLIA</span>
             </h1>
 
             {/* Official Slogan */}
-            <p className="text-xl sm:text-2xl md:text-3xl text-slate-800 font-medium italic tracking-wide max-w-2xl mb-4 drop-shadow-sm">
+            <p className="text-xl sm:text-2xl md:text-3xl text-neutral-200 font-medium italic tracking-wide max-w-2xl mb-4 drop-shadow-md">
               « L'art à portée de main »
             </p>
           </div>
@@ -124,13 +124,13 @@ const HeroVideo = ({ onExploreClick }) => {
               pointerEvents: progress >= 0.45 && progress < 0.85 ? 'auto' : 'none',
             }}
           >
-            <span className="text-xs font-bold tracking-widest uppercase text-violet-600 mb-2 bg-violet-50 px-3 py-1 rounded-full border border-violet-200">
+            <span className="text-xs font-bold tracking-widest uppercase text-violet-400 mb-2 bg-violet-950/60 px-3 py-1 rounded-full border border-violet-500/40">
               L'Instant Éternel
             </span>
-            <h2 className="font-heading text-3xl sm:text-5xl md:text-6xl text-slate-950 font-extrabold max-w-3xl leading-tight drop-shadow-sm mb-4">
-              Chaque seconde est un <span className="bg-gradient-to-r from-violet-600 to-orange-500 bg-clip-text text-transparent">chef-d'œuvre</span>
+            <h2 className="font-heading text-3xl sm:text-5xl md:text-6xl text-white font-extrabold max-w-3xl leading-tight drop-shadow-2xl mb-4">
+              Chaque seconde est un <span className="bg-gradient-to-r from-violet-400 via-purple-400 to-orange-400 bg-clip-text text-transparent">chef-d'œuvre</span>
             </h2>
-            <p className="text-sm sm:text-base text-slate-700 max-w-xl font-medium leading-relaxed drop-shadow-sm">
+            <p className="text-sm sm:text-base text-neutral-300 max-w-xl font-medium leading-relaxed drop-shadow-md">
               La grâce des étoffes, l'éclat des regards et la splendeur des traditions révélés à votre propre rythme.
             </p>
           </div>
@@ -144,16 +144,16 @@ const HeroVideo = ({ onExploreClick }) => {
               pointerEvents: progress >= 0.85 ? 'auto' : 'none',
             }}
           >
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-medium uppercase tracking-wider mb-4 shadow-sm">
-              <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-xs font-medium uppercase tracking-wider mb-4 shadow-sm">
+              <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
               <span>Scène Complète Déroulée</span>
             </div>
-            <h2 className="font-heading text-3xl sm:text-5xl text-slate-950 font-black mb-4 drop-shadow-sm">
-              Pénétrez au Cœur de la <span className="bg-gradient-to-r from-violet-600 to-orange-500 bg-clip-text text-transparent">Collection</span>
+            <h2 className="font-heading text-3xl sm:text-5xl text-white font-black mb-4 drop-shadow-2xl">
+              Pénétrez au Cœur de la <span className="bg-gradient-to-r from-violet-400 via-purple-400 to-orange-400 bg-clip-text text-transparent">Collection</span>
             </h2>
             <button
               onClick={onExploreClick}
-              className="px-7 py-3.5 rounded-full bg-gradient-to-r from-violet-600 via-purple-600 to-orange-500 hover:from-violet-500 hover:to-orange-400 text-white font-bold text-sm tracking-wider uppercase transition-all shadow-xl shadow-violet-500/25 flex items-center gap-2 cursor-pointer hover:scale-105 pointer-events-auto"
+              className="px-7 py-3.5 rounded-full bg-gradient-to-r from-violet-600 via-purple-600 to-orange-500 hover:from-violet-500 hover:to-orange-400 text-white font-bold text-sm tracking-wider uppercase transition-all shadow-2xl shadow-violet-500/30 flex items-center gap-2 cursor-pointer hover:scale-105 pointer-events-auto"
             >
               <span>Découvrir le Carrousel 3D</span>
               <ArrowRight className="w-4 h-4" />
@@ -163,18 +163,18 @@ const HeroVideo = ({ onExploreClick }) => {
 
         {/* Interactive Scroll Prompt & Live Scrub Indicator */}
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2.5 pointer-events-auto">
-          {/* Scroll instruction indicator in Light Glassmorphism */}
-          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/90 backdrop-blur-md border border-slate-200/90 text-slate-800 text-xs font-mono shadow-xl">
-            <Mouse className="w-3.5 h-3.5 text-violet-600 animate-pulse" />
+          {/* Scroll instruction indicator in Dark Glassmorphism */}
+          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-white/90 text-xs font-mono shadow-2xl">
+            <Mouse className="w-3.5 h-3.5 text-violet-400 animate-pulse" />
             <span className="hidden sm:inline">Tournez la roulette de la souris pour animer :</span>
             <span className="sm:hidden">Défilez :</span>
-            <span className="text-orange-500 font-bold">{progressPercent}%</span>
+            <span className="text-orange-400 font-bold">{progressPercent}%</span>
           </div>
 
           {/* Minimal visual progress bar */}
-          <div className="w-48 sm:w-64 h-1.5 bg-slate-200/90 rounded-full overflow-hidden shadow-inner">
+          <div className="w-48 sm:w-64 h-1.5 bg-white/20 rounded-full overflow-hidden shadow-inner">
             <div
-              className="h-full bg-gradient-to-r from-violet-600 via-purple-600 to-orange-500 rounded-full transition-all duration-100 ease-out"
+              className="h-full bg-gradient-to-r from-violet-500 via-purple-500 to-orange-500 rounded-full transition-all duration-100 ease-out"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
@@ -182,7 +182,7 @@ const HeroVideo = ({ onExploreClick }) => {
           {/* Down Chevron */}
           <button
             onClick={onExploreClick}
-            className="flex items-center gap-1 text-[11px] font-medium text-slate-500 hover:text-violet-600 transition-colors uppercase tracking-widest cursor-pointer mt-1"
+            className="flex items-center gap-1 text-[11px] font-medium text-white/50 hover:text-violet-300 transition-colors uppercase tracking-widest cursor-pointer mt-1"
           >
             <span>Passer à la galerie</span>
             <ChevronDown className="w-3.5 h-3.5" />
